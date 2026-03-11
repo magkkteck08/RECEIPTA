@@ -7,7 +7,7 @@ import { KeyRound, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient()
+  // Notice we removed createClient() from here!
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [isSent, setIsSent] = useState(false)
@@ -16,20 +16,27 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
 
-    // 🛡️ THE FIX: Safe origin check for Next.js build compiler
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    try {
+      // 🛡️ THE CTO BYPASS: We create the client INSIDE the click handler.
+      // Vercel's build compiler ignores this completely during deployment!
+      const supabase = createClient()
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/update-password`,
-    })
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/update-password`,
+      })
 
-    if (error) {
-      toast.error(error.message)
-    } else {
-      setIsSent(true)
-      toast.success("Recovery email sent!")
+      if (error) {
+        toast.error(error.message)
+      } else {
+        setIsSent(true)
+        toast.success("Recovery email sent!")
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An error occurred.")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
