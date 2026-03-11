@@ -16,8 +16,11 @@ export default function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
 
+    // 🛡️ THE FIX: Safe origin check for Next.js build compiler
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
+      redirectTo: `${origin}/update-password`,
     })
 
     if (error) {
