@@ -125,7 +125,7 @@ export default function LandingPage() {
               target="_blank" 
               className="inline-flex items-center gap-2 text-[#FF6B4A] hover:text-white font-bold transition-colors"
             >
-              Connect with me on X →
+              Connect with me on X → IdanMagkk
             </a>
           </div>
         </div>
