@@ -1,3 +1,5 @@
+Tell me the structure of this code
+
 import Link from 'next/link'
 import { ArrowRight, Receipt, ShieldCheck, Zap, Store, BarChart3, CheckCircle2 } from 'lucide-react'
 
@@ -94,40 +96,6 @@ export default function LandingPage() {
               <p className="text-[#737490] text-sm leading-relaxed">Every receipt gets a unique bank-grade QR code. Customers and security can scan to verify authenticity on our public portal.</p>
             </div>
 
-          </div>
-        </div>
-      </section>
-
-      {/* ========== FOUNDER STORY ========== */}
-      <section className="relative z-10 border-t border-[#252733]/50 py-20 px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1C1E28] border border-[#252733] mb-6">
-            <div className="w-2 h-2 bg-[#FF6B4A] rounded-full animate-pulse"></div>
-            <span className="text-xs font-bold tracking-[2px] text-[#FF6B4A] uppercase">Built in Nigeria</span>
-          </div>
-
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-6">
-            Built by a developer who understands Nigerian vendors
-          </h2>
-          
-          <p className="text-[#A1A1B5] text-lg max-w-2xl mx-auto mb-8">
-            Hi, I’m <span className="font-semibold text-white">IdanMagkk (MAGKK.TECK)</span>, a full-stack developer and founder of <span className="font-semibold text-white">VELO Agency</span> based in Ibadan, Nigeria.
-          </p>
-
-          <div className="max-w-2xl mx-auto text-left space-y-4 text-[#C5C5D5] bg-[#1C1E28]/50 p-8 rounded-3xl border border-[#252733]">
-            <p>I built Receipta because I saw too many hardworking vendors losing deals and facing disputes simply because their receipts looked unprofessional or couldn’t be verified.</p>
-            <p>My goal is simple: give every Nigerian vendor — whether you sell gadgets, fashion, food, or run an Instagram business — a tool that makes you look bigger, builds instant customer trust, and helps you run your business with clarity.</p>
-          </div>
-
-          <div className="mt-8">
-            <a 
-              href="https://x.com/IdanMAGKK" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-[#FF6B4A] hover:text-white font-bold transition-colors"
-            >
-              Connect with me on X → IdanMagkk 
-            </a>
           </div>
         </div>
       </section>
