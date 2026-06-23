@@ -1,4 +1,4 @@
-Tell me the structure of this code
+
 
 import Link from 'next/link'
 import { ArrowRight, Receipt, ShieldCheck, Zap, Store, BarChart3, CheckCircle2 } from 'lucide-react'
