@@ -1,35 +1,29 @@
+
+
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { ShieldCheck, XCircle, CheckCircle, Calendar, Store, CreditCard, ShoppingBag, Receipt } from 'lucide-react'
 import Link from 'next/link'
 
-// We extract the core logic into a separate component to properly use useSearchParams
-function VerifyContent() {
-  const searchParams = useSearchParams()
+export default function VerifyReceiptPage() {
+  const params = useParams()
   const supabase = createClient()
   
   const [loading, setLoading] = useState(true)
   const [isValid, setIsValid] = useState(false)
   const [receipt, setReceipt] = useState<any>(null)
 
-  // Read the 'id' parameter from the URL (e.g., /verify?id=RCP-123)
-  const receiptId = searchParams.get('id')
-
   useEffect(() => {
     async function verifyCode() {
-      // If there is no ID in the URL, stop loading and show invalid
-      if (!receiptId) {
-        setLoading(false)
-        return
-      }
+      if (!params.code) return setLoading(false)
 
       const { data, error } = await supabase
         .from('receipts')
         .select('*, businesses(*), receipt_items(*)')
-        .eq('verification_code', receiptId)
+        .eq('verification_code', params.code)
         .single()
 
       if (data && !error) {
@@ -43,13 +37,13 @@ function VerifyContent() {
     }
 
     verifyCode()
-  }, [receiptId, supabase])
+  }, [params.code])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F1117] flex flex-col items-center justify-center">
         <ShieldCheck className="w-16 h-16 text-[#60A5FA] animate-pulse mb-4" />
-        <h2 className="text-[#EEEEF5] font-bold tracking-widest text-sm animate-pulse">VERIFYING SECURE RECORD...</h2>
+        <h2 className="text-[#EEEEF5] font-bold tracking-widest text-sm animate-pulse">VERIFYING BLOCKCHAIN RECORD...</h2>
       </div>
     )
   }
@@ -164,19 +158,5 @@ function VerifyContent() {
         
       </div>
     </div>
-  )
-}
-
-// Next.js App Router requires useSearchParams to be wrapped in a Suspense boundary
-export default function VerifyReceiptPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#0F1117] flex flex-col items-center justify-center">
-        <ShieldCheck className="w-16 h-16 text-[#60A5FA] animate-pulse mb-4" />
-        <h2 className="text-[#EEEEF5] font-bold tracking-widest text-sm animate-pulse">LOADING...</h2>
-      </div>
-    }>
-      <VerifyContent />
-    </Suspense>
   )
 }
