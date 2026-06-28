@@ -45,11 +45,11 @@ export default async function DashboardHome() {
       <div className="border-b border-[#252733] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight">
-            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B4A] to-[#E05535]">{business?.business_name || 'Vendor'}</span>
+            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C896] to-[#00A67C]">{business?.business_name || 'Vendor'}</span>
           </h1>
           <p className="text-[#EEEEF5] mt-2 text-sm font-medium">Here is your Receipta financial overview.</p>
         </div>
-        <Link href="/dashboard/receipts/new" className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] font-bold text-sm shadow-[0_0_15px_rgba(110,231,183,0.3)] hover:shadow-[0_0_25px_rgba(110,231,183,0.5)] transition-all">
+        <Link href="/dashboard/receipts/new" className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#00C896] to-[#00A67C] text-[#0F1117] font-bold text-sm shadow-[0_0_15px_rgba(0,200,150,0.3)] hover:shadow-[0_0_25px_rgba(0,200,150,0.5)] transition-all">
           <Receipt className="w-4 h-4 mr-2" /> New Receipt
         </Link>
       </div>
@@ -59,14 +59,14 @@ export default async function DashboardHome() {
         
         {/* Total Revenue */}
         <Card className="bg-[#1C1E28] border-[#252733] shadow-xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF6B4A] opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity"></div>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#00C896] opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity"></div>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-xs font-bold text-[#EEEEF5] uppercase tracking-wider">Total Revenue</CardTitle>
-            <div className="p-2 bg-[#FF6B4A]/10 rounded-lg"><Wallet className="h-4 w-4 text-[#FF6B4A]" /></div>
+            <div className="p-2 bg-[#00C896]/10 rounded-lg"><Wallet className="h-4 w-4 text-[#00C896]" /></div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-white">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-[#FF6B4A] mt-1 flex items-center font-medium">Lifetime earnings</p>
+            <p className="text-xs text-[#00C896] mt-1 flex items-center font-medium">Lifetime earnings</p>
           </CardContent>
         </Card>
 
@@ -116,7 +116,7 @@ export default async function DashboardHome() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-bold text-white">Recent Transactions</h2>
           {receiptsIssued > 0 && (
-            <Link href="/dashboard/receipts" className="text-[#FF6B4A] text-sm font-bold hover:text-[#E05535] flex items-center transition-colors">
+            <Link href="/dashboard/receipts" className="text-[#00C896] text-sm font-bold hover:text-[#00A67C] flex items-center transition-colors">
               View All <ArrowRight className="w-4 h-4 ml-1" />
             </Link>
           )}
@@ -128,7 +128,7 @@ export default async function DashboardHome() {
               <Receipt className="w-6 h-6 text-[#737490]" />
             </div>
             <p className="text-[#EEEEF5] text-sm font-medium">No receipts generated yet.</p>
-            <Link href="/dashboard/receipts/new" className="mt-3 text-[#FF6B4A] text-sm font-bold hover:underline">
+            <Link href="/dashboard/receipts/new" className="mt-3 text-[#00C896] text-sm font-bold hover:underline">
               Create your first receipt →
             </Link>
           </div>
@@ -157,7 +157,7 @@ export default async function DashboardHome() {
                           {receipt.payment_method}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-sm font-black text-[#FF6B4A] text-right">
+                      <td className="py-4 px-6 text-sm font-black text-[#00C896] text-right">
                         {formatCurrency(Number(receipt.grand_total))}
                       </td>
                       <td className="py-4 px-6 text-center">
