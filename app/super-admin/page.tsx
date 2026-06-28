@@ -8,15 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 
 // ==========================================
-// 1. SERVER ACTIONS (Moved outside for stability)
+// 1. SERVER ACTIONS
 // ==========================================
 async function handleLogin(formData: FormData) {
   'use server'
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   
-  // Grab Vercel's email, or default to telling us it is missing
-  const founderEmail = process.env.FOUNDER_EMAIL?.toLowerCase() || 'MISSING_IN_VERCEL'
+  // 🚨 USING NEXT_PUBLIC_ TO FORCE VERCEL TO EXPOSE IT
+  const founderEmail = process.env.NEXT_PUBLIC_FOUNDER_EMAIL?.toLowerCase() || 'MISSING_IN_VERCEL'
 
   const supabase = await createServerClient()
   const { error } = await supabase.auth.signInWithPassword({
@@ -28,16 +28,13 @@ async function handleLogin(formData: FormData) {
     redirect('/super-admin?error=Invalid admin credentials')
   }
   
-  // 🚨 THE DEBUG FIX: This will now print both emails to the screen
   if (email.toLowerCase() !== founderEmail) {
     await supabase.auth.signOut() 
     redirect(`/super-admin?error=Mismatch! You typed: [${email}] but Vercel has: [${founderEmail}]`)
   }
 
-  // Success
   redirect('/super-admin')
 }
-
 
 async function handleLogout() {
   'use server'
@@ -54,14 +51,13 @@ export default async function SuperAdminDashboard({
 }: { 
   searchParams: Promise<{ error?: string }> 
 }) {
-  // Await searchParams for error messages
   const params = await searchParams;
 
-  // Check who is currently logged in
   const supabaseAuth = await createServerClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()
 
-  const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL?.toLowerCase()
+  // 🚨 USING NEXT_PUBLIC_ HERE AS WELL
+  const FOUNDER_EMAIL = process.env.NEXT_PUBLIC_FOUNDER_EMAIL?.toLowerCase()
 
   // ==========================================
   // VIEW 1: THE LOGIN SCREEN (UNAUTHORIZED)
@@ -82,7 +78,6 @@ export default async function SuperAdminDashboard({
 
           <form action={handleLogin} className="bg-[#11141B] border border-[#232838] p-8 rounded-[2rem] shadow-2xl space-y-5">
             
-            {/* 🚨 THE ERROR MESSAGE BOX */}
             {params?.error && (
               <div className="p-3 bg-[#FB7185]/10 border border-[#FB7185]/30 rounded-lg text-center">
                 <p className="text-[#FB7185] text-xs font-bold">{params.error}</p>
@@ -131,7 +126,6 @@ export default async function SuperAdminDashboard({
   // VIEW 2: THE DASHBOARD SCREEN (AUTHORIZED)
   // ==========================================
   
-  // ADMIN CLIENT: Use the Service Role Key to bypass RLS
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -174,7 +168,6 @@ export default async function SuperAdminDashboard({
   return (
     <div className="min-h-screen bg-[#07090F] p-4 md:p-10 font-sans">
       
-      {/* Header with Logout Button */}
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between border-b border-[#232838] pb-6 gap-4">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
@@ -195,7 +188,6 @@ export default async function SuperAdminDashboard({
         </div>
       </div>
 
-      {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
         <Card className="bg-[#11141B] border-[#232838]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -242,7 +234,6 @@ export default async function SuperAdminDashboard({
         </Card>
       </div>
 
-      {/* Recent Users Matrix */}
       <h2 className="text-xl font-bold text-white mb-6">Latest Vendor Signups</h2>
       <div className="bg-[#11141B] border border-[#232838] rounded-2xl w-full">
         <div className="overflow-x-auto">
