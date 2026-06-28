@@ -12,29 +12,30 @@ async function handleLogin(formData: FormData) {
   'use server'
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const founderEmail = process.env.FOUNDER_EMAIL?.toLowerCase() || ''
+  
+  // Grab Vercel's email, or default to telling us it is missing
+  const founderEmail = process.env.FOUNDER_EMAIL?.toLowerCase() || 'MISSING_IN_VERCEL'
 
-  // 1. Verify credentials with Supabase
   const supabase = await createServerClient()
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
-  // 2. Catch invalid passwords
   if (error) {
     redirect('/super-admin?error=Invalid admin credentials')
   }
   
-  // 3. Catch unauthorized emails (The Silent Reload Fix)
+  // 🚨 THE DEBUG FIX: This will now print both emails to the screen
   if (email.toLowerCase() !== founderEmail) {
-    await supabase.auth.signOut() // Log them back out for security
-    redirect('/super-admin?error=Unauthorized: This email is not set as the Founder')
+    await supabase.auth.signOut() 
+    redirect(`/super-admin?error=Mismatch! You typed: [${email}] but Vercel has: [${founderEmail}]`)
   }
 
-  // 4. Success: reload the page to show the dashboard
+  // Success
   redirect('/super-admin')
 }
+
 
 async function handleLogout() {
   'use server'
