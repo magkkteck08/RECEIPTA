@@ -7,22 +7,29 @@ import { KeyRound, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ForgotPasswordPage() {
-  // Notice we removed createClient() from here!
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [isSent, setIsSent] = useState(false)
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!email.trim()) {
+      toast.error("Please enter a valid email address.")
+      return
+    }
+
     setLoading(true)
 
     try {
-      // 🛡️ THE CTO BYPASS: We create the client INSIDE the click handler.
-      // Vercel's build compiler ignores this completely during deployment!
+      // Initialize Supabase client
       const supabase = createClient()
+      
+      // Dynamically grab the current environment URL (localhost or production domain)
       const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        // This is the instruction Supabase needs to route the user correctly
         redirectTo: `${origin}/update-password`,
       })
 
@@ -33,14 +40,15 @@ export default function ForgotPasswordPage() {
         toast.success("Recovery email sent!")
       }
     } catch (err: any) {
-      toast.error(err.message || "An error occurred.")
+      toast.error(err.message || "An unexpected error occurred.")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0F1117] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0F1117] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
+      
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#FF6B4A] rounded-full blur-[200px] opacity-10 pointer-events-none"></div>
 
@@ -56,18 +64,23 @@ export default function ForgotPasswordPage() {
           
           <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Reset Password</h1>
           <p className="text-[#737490] text-sm mb-8 leading-relaxed">
-            Enter the email address associated with your Receipta account, and we'll send you a secure link to reset your password.
+            Enter the email address associated with your account, and we'll send you a secure link to reset your password.
           </p>
 
           {isSent ? (
-            <div className="bg-[#10B981]/10 border border-[#10B981]/30 p-4 rounded-xl text-center">
-              <p className="text-[#10B981] font-bold text-sm mb-1">Check your inbox!</p>
-              <p className="text-[#EEEEF5] text-xs">We sent a recovery link to <b>{email}</b></p>
+            <div className="bg-[#10B981]/10 border border-[#10B981]/30 p-6 rounded-xl text-center">
+              <p className="text-[#10B981] font-bold text-sm mb-2">Check your inbox!</p>
+              <p className="text-[#EEEEF5] text-xs leading-relaxed">
+                We sent a recovery link to <br/>
+                <b className="text-white text-sm">{email}</b>
+              </p>
             </div>
           ) : (
             <form onSubmit={handleReset} className="space-y-6">
               <div>
-                <label className="text-[11px] font-bold text-[#EEEEF5] uppercase tracking-wider mb-2 block">Email Address</label>
+                <label className="text-[11px] font-bold text-[#EEEEF5] uppercase tracking-wider mb-2 block">
+                  Email Address
+                </label>
                 <input 
                   type="email" 
                   required
