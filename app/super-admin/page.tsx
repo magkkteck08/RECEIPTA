@@ -9,7 +9,7 @@ export default async function SuperAdminDashboard() {
   const supabaseAuth = await createServerClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()
 
-  // 🔒 THE CTO LOCK: Now securely using your environment variables
+  // 🔒 THE CTO LOCK: Securely using your environment variables
   const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL 
 
   if (!user || user.email !== FOUNDER_EMAIL) {
@@ -24,27 +24,43 @@ export default async function SuperAdminDashboard() {
 
   // 3. FETCH GLOBAL METRICS IN PARALLEL
   const [
-    { count: totalUsers },
+    { data: allBusinesses },
     { count: totalReceipts },
     { data: receiptsData },
     { data: recentBusinesses }
   ] = await Promise.all([
-    supabaseAdmin.from('businesses').select('*', { count: 'exact', head: true }),
+    // We now fetch the subscription column to calculate MRR
+    supabaseAdmin.from('businesses').select('id, subscription'),
     supabaseAdmin.from('receipts').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('receipts').select('grand_total'),
     supabaseAdmin.from('businesses').select('*').order('created_at', { ascending: false }).limit(10)
   ])
 
-  // Calculate Total Platform Volume
+  // 💰 Calculate Total Platform Volume
   const totalVolume = receiptsData?.reduce((sum, receipt) => {
     return sum + (Number(receipt.grand_total) || 0)
   }, 0) || 0
 
-  // ⚠️ MRR PLACEHOLDER LOGIC: 
-  // Update this logic based on how your pricing works. 
-  // Example: Assuming each user pays ₦5,000/month.
-  const assumedMonthlySubscriptionRate = 0 
-  const calculatedMRR = (totalUsers || 0) * assumedMonthlySubscriptionRate
+  // 📈 THE REAL MRR CALCULATION ENGINE
+  const BASIC_PLAN_PRICE = 5000;   // Set your actual Basic price here
+  const PREMIUM_PLAN_PRICE = 15000; // Set your actual Premium price here
+
+  let calculatedMRR = 0;
+  let paidUsersCount = 0;
+  const totalUsers = allBusinesses?.length || 0;
+
+  allBusinesses?.forEach((biz) => {
+    // Make sure we handle potential capitalization differences (e.g., 'Basic' vs 'basic')
+    const subType = (biz.subscription || 'free').toLowerCase(); 
+    
+    if (subType === 'basic') {
+      calculatedMRR += BASIC_PLAN_PRICE;
+      paidUsersCount++;
+    } else if (subType === 'premium') {
+      calculatedMRR += PREMIUM_PLAN_PRICE;
+      paidUsersCount++;
+    }
+  });
 
   return (
     <div className="min-h-screen bg-[#07090F] p-4 md:p-10 font-sans">
@@ -73,7 +89,7 @@ export default async function SuperAdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-black text-white">₦{calculatedMRR.toLocaleString()}</div>
-            <p className="text-[#5C6478] text-xs mt-1">Pending subscription logic</p>
+            <p className="text-[#5C6478] text-xs mt-1">{paidUsersCount} Active paid subscriptions</p>
           </CardContent>
         </Card>
 
@@ -83,8 +99,8 @@ export default async function SuperAdminDashboard() {
             <Users className="w-4 h-4 text-[#FF6B4A]" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-black text-white">{totalUsers || 0}</div>
-            <p className="text-[#5C6478] text-xs mt-1">Active businesses</p>
+            <div className="text-xl md:text-2xl font-black text-white">{totalUsers}</div>
+            <p className="text-[#5C6478] text-xs mt-1">Total platform accounts</p>
           </CardContent>
         </Card>
 
@@ -112,10 +128,9 @@ export default async function SuperAdminDashboard() {
 
       </div>
 
-      {/* Recent Users Matrix - Now with mobile swipe! */}
+      {/* Recent Users Matrix - Mobile Swipe Enabled! */}
       <h2 className="text-xl font-bold text-white mb-6">Latest Vendor Signups</h2>
       
-      {/* 🚀 THE SWIPE WRAPPER: overflow-x-auto allows horizontal scrolling */}
       <div className="bg-[#11141B] border border-[#232838] rounded-2xl w-full">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-[#8B92A6] whitespace-nowrap">
@@ -123,8 +138,8 @@ export default async function SuperAdminDashboard() {
               <tr>
                 <th className="px-6 py-4 text-white">Business Name</th>
                 <th className="px-6 py-4 text-white">Contact</th>
+                <th className="px-6 py-4 text-white">Plan</th>
                 <th className="px-6 py-4 text-white">Date Joined</th>
-                <th className="px-6 py-4 text-white text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#232838]">
@@ -132,12 +147,16 @@ export default async function SuperAdminDashboard() {
                 <tr key={business.id} className="hover:bg-[#161B24]/50 transition-colors">
                   <td className="px-6 py-4 font-bold text-white">{business.business_name || business.full_name || 'Unnamed Business'}</td>
                   <td className="px-6 py-4">{business.business_email || business.business_phone || 'N/A'}</td>
-                  <td className="px-6 py-4">{new Date(business.created_at).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 text-right">
-                    <span className="bg-[#00C896]/10 text-[#00C896] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-[#00C896]/20">
-                      Active
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
+                      (business.subscription || 'free').toLowerCase() === 'premium' ? 'bg-[#FF6B4A]/10 text-[#FF6B4A] border-[#FF6B4A]/20' : 
+                      (business.subscription || 'free').toLowerCase() === 'basic' ? 'bg-[#4A90E2]/10 text-[#4A90E2] border-[#4A90E2]/20' : 
+                      'bg-[#5C6478]/10 text-[#8B92A6] border-[#5C6478]/20'
+                    }`}>
+                      {business.subscription || 'Free'}
                     </span>
                   </td>
+                  <td className="px-6 py-4">{new Date(business.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
               {!recentBusinesses?.length && (
