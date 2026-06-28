@@ -81,7 +81,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07090F] text-[#EAF1EE] font-sans selection:bg-[#00C896] selection:text-[#07090F] overflow-hidden relative">
+    <div className="min-h-screen bg-[#0F1117] text-[#EEEEF5] font-sans selection:bg-[#00C896] selection:text-[#0F1117] overflow-hidden relative">
 
       {/* Animations & Custom Styles */}
       <style>{`
@@ -110,7 +110,7 @@ export default function LandingPage() {
       <div className="absolute bottom-[15%] right-[-10%] w-[500px] h-[500px] bg-[#047857] rounded-full blur-[250px] opacity-[0.14] pointer-events-none" />
 
       {/* NAVBAR */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto border-b border-[#1E2430]/60">
+      <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto border-b border-[#252733]/60">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-[#00C896] to-[#047857] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(0,200,150,0.35)]">
             <Store className="w-5 h-5 text-white" />
@@ -118,10 +118,10 @@ export default function LandingPage() {
           <span className="text-xl font-black text-white tracking-tight">Receipta</span>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-bold text-[#8B92A6] hover:text-white transition-colors hidden sm:block">
+          <Link href="/login" className="text-sm font-bold text-[#737490] hover:text-white transition-colors hidden sm:block">
             Sign In
           </Link>
-          <Link href="/login" className="px-5 py-2.5 bg-[#11141B] border border-[#232838] text-white text-sm font-bold rounded-xl hover:border-[#00C896]/50 transition-all flex items-center group">
+          <Link href="/login" className="px-5 py-2.5 bg-[#1C1E28] border border-[#252733] text-white text-sm font-bold rounded-xl hover:border-[#00C896]/50 transition-all flex items-center group">
             Get Started <ArrowRight className="w-4 h-4 ml-2 text-[#00C896] group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -142,18 +142,18 @@ export default function LandingPage() {
             </span>
           </h1>
 
-          <p className="fade-up text-[#A8AFC0] text-lg max-w-xl mb-10 leading-relaxed" style={{ animationDelay: '0.1s' }}>
+          <p className="fade-up text-[#737490] text-lg max-w-xl mb-10 leading-relaxed" style={{ animationDelay: '0.1s' }}>
             Create, send, and verify beautiful digital receipts in seconds. Stop losing disputes and start looking like the premium business you are.
           </p>
 
           {/* ACTION AREA */}
           <div className="fade-up w-full max-w-md mb-12" style={{ animationDelay: '0.15s' }}>
             <div className="flex flex-col gap-3 mb-4">
-              <Link href="/login" className="w-full px-8 py-4 bg-[#00C896] text-[#07090F] text-base font-black rounded-2xl shadow-[0_0_30px_rgba(0,200,150,0.3)] hover:shadow-[0_0_40px_rgba(0,200,150,0.5)] transition-all flex items-center justify-center hover:-translate-y-1">
+              <Link href="/login" className="w-full px-8 py-4 bg-[#00C896] text-[#0F1117] text-base font-black rounded-2xl shadow-[0_0_30px_rgba(0,200,150,0.3)] hover:shadow-[0_0_40px_rgba(0,200,150,0.5)] transition-all flex items-center justify-center hover:-translate-y-1">
                 CREATE FREE ACCOUNT
               </Link>
               
-              <button className="w-full px-8 py-4 bg-[#11141B] border border-[#232838] text-white text-base font-bold rounded-2xl hover:bg-[#161B24] hover:border-[#5C6478] transition-all flex items-center justify-center gap-3">
+              <button className="w-full px-8 py-4 bg-[#1C1E28] border border-[#252733] text-white text-base font-bold rounded-2xl hover:bg-[#15171F] hover:border-[#737490] transition-all flex items-center justify-center gap-3">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z"/>
                   <path fill="#34A853" d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z"/>
@@ -167,13 +167,13 @@ export default function LandingPage() {
             {/* OPEN MODAL BUTTON */}
             <button 
               onClick={() => setIsVerifyOpen(true)}
-              className="w-full px-8 py-4 bg-transparent border border-[#232838] text-[#8B92A6] text-sm font-bold rounded-2xl hover:bg-[#11141B] hover:text-white transition-all flex items-center justify-center"
+              className="w-full px-8 py-4 bg-transparent border border-[#252733] text-[#737490] text-sm font-bold rounded-2xl hover:bg-[#1C1E28] hover:text-white transition-all flex items-center justify-center"
             >
               <ShieldCheck className="w-4 h-4 mr-2 text-[#00C896]" /> Verify a Receipt Securely
             </button>
           </div>
 
-          <div className="fade-up flex flex-wrap items-center gap-6 text-[#8B92A6] text-sm font-bold" style={{ animationDelay: '0.2s' }}>
+          <div className="fade-up flex flex-wrap items-center gap-6 text-[#737490] text-sm font-bold" style={{ animationDelay: '0.2s' }}>
             <span className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-2 text-[#00C896]" /> Free forever plan</span>
             <span className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-2 text-[#00C896]" /> Anti-fraud QR codes</span>
           </div>
@@ -181,8 +181,8 @@ export default function LandingPage() {
 
         {/* Right: floating receipt cluster */}
         <div className="relative w-full max-w-sm mx-auto h-[440px] lg:h-[480px]">
-          <div className="float-ghost absolute top-6 left-4 right-4 bottom-10 bg-[#161B24] border border-[#1E2430] rounded-3xl shadow-2xl" />
-          <div className="float-main absolute inset-0 bg-[#11141B] border border-[#232838] rounded-3xl p-6 shadow-[0_30px_60px_-15px_rgba(0,200,150,0.25)]">
+          <div className="float-ghost absolute top-6 left-4 right-4 bottom-10 bg-[#15171F] border border-[#252733] rounded-3xl shadow-2xl" />
+          <div className="float-main absolute inset-0 bg-[#1C1E28] border border-[#252733] rounded-3xl p-6 shadow-[0_30px_60px_-15px_rgba(0,200,150,0.25)]">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-gradient-to-br from-[#00C896] to-[#047857] rounded-lg flex items-center justify-center">
@@ -190,72 +190,72 @@ export default function LandingPage() {
                 </div>
                 <span className="text-xs font-black text-white tracking-wide">RECEIPTA</span>
               </div>
-              <span className="text-[10px] text-[#5C6478] font-mono">#RCP-2049</span>
+              <span className="text-[10px] text-[#737490] font-mono">#RCP-2049</span>
             </div>
-            <p className="text-[10px] text-[#5C6478] mb-4 font-mono">Lagos Tech Hub · Jun 23, 2026</p>
+            <p className="text-[10px] text-[#737490] mb-4 font-mono">Lagos Tech Hub · Jun 23, 2026</p>
             <div className="space-y-2.5 mb-4">
               {lineItems.map(([item, price]) => (
                 <div key={item} className="flex items-center justify-between text-xs">
-                  <span className="text-[#A8AFC0]">{item}</span>
+                  <span className="text-[#EEEEF5]">{item}</span>
                   <span className="text-white font-bold">{price}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t border-[#232838] pt-3 flex items-center justify-between mb-5">
-              <span className="text-xs font-bold text-[#8B92A6] uppercase tracking-wider">Total</span>
+            <div className="border-t border-[#252733] pt-3 flex items-center justify-between mb-5">
+              <span className="text-xs font-bold text-[#737490] uppercase tracking-wider">Total</span>
               <span className="text-lg font-black text-[#5EEAD4]">₦32,500</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="grid grid-cols-5 gap-[2px]">
                 {qrPattern.map((on, i) => (
-                  <span key={i} className={`w-1.5 h-1.5 rounded-[1px] ${on ? 'bg-[#00C896]' : 'bg-[#232838]'}`} />
+                  <span key={i} className={`w-1.5 h-1.5 rounded-[1px] ${on ? 'bg-[#00C896]' : 'bg-[#252733]'}`} />
                 ))}
               </div>
-              <span className="text-[9px] text-[#5C6478] font-mono">Scan to verify</span>
+              <span className="text-[9px] text-[#737490] font-mono">Scan to verify</span>
             </div>
           </div>
-          <div className="stamp-pop absolute -top-4 -right-3 bg-[#00C896] text-[#07090F] text-[10px] font-black px-3 py-1.5 rounded-full shadow-[0_10px_30px_-5px_rgba(0,200,150,0.6)] flex items-center gap-1">
+          <div className="stamp-pop absolute -top-4 -right-3 bg-[#00C896] text-[#0F1117] text-[10px] font-black px-3 py-1.5 rounded-full shadow-[0_10px_30px_-5px_rgba(0,200,150,0.6)] flex items-center gap-1">
             <ShieldCheck className="w-3 h-3" /> VERIFIED
           </div>
         </div>
       </main>
 
       {/* FEATURES GRID */}
-      <section className="relative z-10 border-t border-[#1E2430]/60 bg-[#0B0E14]/60 pt-24 pb-24 px-6">
+      <section className="relative z-10 border-t border-[#252733]/60 bg-[#0F1117] pt-24 pb-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-4">Everything you need to scale safely.</h2>
-            <p className="text-[#A8AFC0]">Powerful tools designed specifically for modern African businesses.</p>
+            <p className="text-[#737490]">Powerful tools designed specifically for modern African businesses.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#11141B] border border-[#232838] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
+            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
               <div className="w-12 h-12 bg-[#00C896]/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Receipt className="w-6 h-6 text-[#00C896]" />
               </div>
               <h3 className="text-xl font-black text-white mb-3">Smart Invoicing</h3>
-              <p className="text-[#A8AFC0] text-sm leading-relaxed">Generate beautiful, branded receipts in seconds. Download as HD images or send directly to customers via WhatsApp.</p>
+              <p className="text-[#737490] text-sm leading-relaxed">Generate beautiful, branded receipts in seconds. Download as HD images or send directly to customers via WhatsApp.</p>
             </div>
-            <div className="bg-[#11141B] border border-[#232838] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
+            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
               <div className="w-12 h-12 bg-[#00C896]/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <BarChart3 className="w-6 h-6 text-[#00C896]" />
               </div>
               <h3 className="text-xl font-black text-white mb-3">Sales Analytics</h3>
-              <p className="text-[#A8AFC0] text-sm leading-relaxed">Track your revenue, log your expenses, and instantly see your net profit. Make smarter decisions with visual charts.</p>
+              <p className="text-[#737490] text-sm leading-relaxed">Track your revenue, log your expenses, and instantly see your net profit. Make smarter decisions with visual charts.</p>
             </div>
-            <div className="bg-[#11141B] border border-[#232838] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
+            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
               <div className="w-12 h-12 bg-[#00C896]/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <ShieldCheck className="w-6 h-6 text-[#00C896]" />
               </div>
               <h3 className="text-xl font-black text-white mb-3">Anti-Fraud Verification</h3>
-              <p className="text-[#A8AFC0] text-sm leading-relaxed">Every receipt gets a unique bank-grade QR code. Customers can scan to verify authenticity on our public portal.</p>
+              <p className="text-[#737490] text-sm leading-relaxed">Every receipt gets a unique bank-grade QR code. Customers can scan to verify authenticity on our public portal.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* PRICING SECTION */}
-      <section className="relative z-10 border-t border-[#1E2430]/60 bg-[#07090F] pt-24 pb-24 px-6">
+      <section className="relative z-10 border-t border-[#252733]/60 bg-[#0F1117] pt-24 pb-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00C896]/10 border border-[#00C896]/30 mb-6">
@@ -263,78 +263,78 @@ export default function LandingPage() {
               <span className="text-xs font-bold tracking-[2px] text-[#00C896] uppercase">Level Up Your Business</span>
             </div>
             <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4">Simple, transparent pricing.</h2>
-            <p className="text-[#A8AFC0]">Remove all limits and show your customers you mean business.</p>
+            <p className="text-[#737490]">Remove all limits and show your customers you mean business.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Free Tier */}
-            <div className="bg-[#11141B] border border-[#232838] p-8 rounded-3xl flex flex-col">
+            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl flex flex-col">
               <h3 className="text-xl font-black text-white mb-2">Free</h3>
-              <p className="text-[#8B92A6] text-sm mb-6">Perfect for getting started.</p>
+              <p className="text-[#737490] text-sm mb-6">Perfect for getting started.</p>
               <div className="mb-8">
                 <span className="text-4xl font-black text-white">₦0</span>
-                <span className="text-[#8B92A6]"> / forever</span>
+                <span className="text-[#737490]"> / forever</span>
               </div>
               <div className="space-y-4 mb-8 flex-1">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#A8AFC0] text-sm">Up to <strong className="text-white">5 receipts</strong> per month.</p>
+                  <p className="text-[#EEEEF5] text-sm">Up to <strong className="text-white">5 receipts</strong> per month.</p>
                 </div>
                 <div className="flex items-start gap-3 opacity-60">
-                  <Lock className="w-5 h-5 text-[#5C6478] shrink-0 mt-0.5" />
-                  <p className="text-[#8B92A6] text-sm">Dashboard access locked.</p>
+                  <Lock className="w-5 h-5 text-[#737490] shrink-0 mt-0.5" />
+                  <p className="text-[#737490] text-sm">Dashboard access locked.</p>
                 </div>
               </div>
-              <Link href="/login" className="w-full py-4 bg-[#161B24] border border-[#232838] text-white text-sm font-bold rounded-xl hover:bg-[#1E2430] transition-colors text-center">
+              <Link href="/login" className="w-full py-4 bg-[#15171F] border border-[#252733] text-white text-sm font-bold rounded-xl hover:bg-[#252733] transition-colors text-center">
                 Start Free
               </Link>
             </div>
 
             {/* Basic Tier */}
-            <div className="bg-[#11141B] border border-[#232838] p-8 rounded-3xl flex flex-col">
+            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl flex flex-col">
               <h3 className="text-xl font-black text-white mb-2">Basic</h3>
-              <p className="text-[#8B92A6] text-sm mb-6">For growing daily vendors.</p>
+              <p className="text-[#737490] text-sm mb-6">For growing daily vendors.</p>
               <div className="mb-8">
                 <span className="text-4xl font-black text-white">₦1,000</span>
-                <span className="text-[#8B92A6]"> / month</span>
+                <span className="text-[#737490]"> / month</span>
               </div>
               <div className="space-y-4 mb-8 flex-1">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#A8AFC0] text-sm">Up to <strong className="text-white">20 receipts</strong> per month.</p>
+                  <p className="text-[#EEEEF5] text-sm">Up to <strong className="text-white">20 receipts</strong> per month.</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <Unlock className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#A8AFC0] text-sm"><strong className="text-white">Unlocked Dashboard:</strong> Access to basic stats and history.</p>
+                  <p className="text-[#EEEEF5] text-sm"><strong className="text-white">Unlocked Dashboard:</strong> Access to basic stats and history.</p>
                 </div>
               </div>
-              <Link href="/login" className="w-full py-4 bg-[#161B24] border border-[#232838] text-white text-sm font-bold rounded-xl hover:bg-[#1E2430] transition-colors text-center">
+              <Link href="/login" className="w-full py-4 bg-[#15171F] border border-[#252733] text-white text-sm font-bold rounded-xl hover:bg-[#252733] transition-colors text-center">
                 Choose Basic
               </Link>
             </div>
 
             {/* Premium Tier */}
-            <div className="bg-gradient-to-b from-[#00C896]/10 to-[#11141B] border border-[#00C896]/50 p-8 rounded-3xl flex flex-col relative shadow-[0_0_40px_-10px_rgba(0,200,150,0.2)] transform md:-translate-y-4">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00C896] text-[#07090F] text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
+            <div className="bg-gradient-to-b from-[#00C896]/10 to-[#1C1E28] border border-[#00C896]/50 p-8 rounded-3xl flex flex-col relative shadow-[0_0_40px_-10px_rgba(0,200,150,0.2)] transform md:-translate-y-4">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00C896] text-[#0F1117] text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
                 Recommended
               </div>
               <h3 className="text-xl font-black text-white mb-2">Premium</h3>
-              <p className="text-[#8B92A6] text-sm mb-6">Unlimited power for power users.</p>
+              <p className="text-[#737490] text-sm mb-6">Unlimited power for power users.</p>
               <div className="mb-8">
                 <span className="text-4xl font-black text-white">₦12,000</span>
-                <span className="text-[#8B92A6]"> / year</span>
+                <span className="text-[#737490]"> / year</span>
               </div>
               <div className="space-y-4 mb-8 flex-1">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#A8AFC0] text-sm"><strong className="text-white">Unlimited receipts</strong> generator.</p>
+                  <p className="text-[#EEEEF5] text-sm"><strong className="text-white">Unlimited receipts</strong> generator.</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#A8AFC0] text-sm"><strong className="text-white">Full App Access:</strong> Unlock Analytics, Items, Clients, and Spend tracking.</p>
+                  <p className="text-[#EEEEF5] text-sm"><strong className="text-white">Full App Access:</strong> Unlock Analytics, Items, Clients, and Spend tracking.</p>
                 </div>
               </div>
-              <Link href="/login" className="w-full py-4 bg-[#00C896] text-[#07090F] text-sm font-black rounded-xl hover:bg-[#5EEAD4] transition-colors text-center shadow-[0_10px_20px_-5px_rgba(0,200,150,0.3)]">
+              <Link href="/login" className="w-full py-4 bg-[#00C896] text-[#0F1117] text-sm font-black rounded-xl hover:bg-[#5EEAD4] transition-colors text-center shadow-[0_10px_20px_-5px_rgba(0,200,150,0.3)]">
                 Upgrade to Premium
               </Link>
             </div>
@@ -343,10 +343,10 @@ export default function LandingPage() {
       </section>
 
       {/* TESTIMONIAL */}
-      <section className="relative z-10 py-24 px-6 bg-[#0B0E14]">
+      <section className="relative z-10 py-24 px-6 bg-[#0F1117]">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-br from-[#11141B] to-[#0B0E14] border border-[#232838] p-10 md:p-14 rounded-[40px] relative overflow-hidden">
-            <Quote className="absolute top-8 right-8 w-24 h-24 text-[#232838] opacity-50" />
+          <div className="bg-gradient-to-br from-[#1C1E28] to-[#0F1117] border border-[#252733] p-10 md:p-14 rounded-[40px] relative overflow-hidden">
+            <Quote className="absolute top-8 right-8 w-24 h-24 text-[#252733] opacity-50" />
             <div className="flex gap-1 mb-6 relative z-10">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star key={star} className="w-5 h-5 fill-[#00C896] text-[#00C896]" />
@@ -361,7 +361,7 @@ export default function LandingPage() {
               </div>
               <div>
                 <p className="text-white font-bold">Olamide O.</p>
-                <p className="text-[#8B92A6] text-sm">Instagram Gadget Vendor</p>
+                <p className="text-[#737490] text-sm">Instagram Gadget Vendor</p>
               </div>
             </div>
           </div>
@@ -369,20 +369,20 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ SECTION */}
-      <section className="relative z-10 border-t border-[#1E2430]/60 bg-[#07090F] py-24 px-6">
+      <section className="relative z-10 border-t border-[#252733]/60 bg-[#0F1117] py-24 px-6">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-4">Frequently Asked Questions</h2>
-            <p className="text-[#A8AFC0]">Everything you need to know about how Receipta works.</p>
+            <p className="text-[#737490]">Everything you need to know about how Receipta works.</p>
           </div>
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <details key={index} className="group bg-[#11141B] border border-[#232838] rounded-2xl open:bg-[#161B24] transition-colors">
+              <details key={index} className="group bg-[#1C1E28] border border-[#252733] rounded-2xl open:bg-[#15171F] transition-colors">
                 <summary className="flex items-center justify-between p-6 font-bold text-white cursor-pointer select-none">
                   {faq.question}
-                  <ChevronDown className="w-5 h-5 text-[#8B92A6] group-open:-rotate-180 transition-transform duration-300" />
+                  <ChevronDown className="w-5 h-5 text-[#737490] group-open:-rotate-180 transition-transform duration-300" />
                 </summary>
-                <div className="px-6 pb-6 text-[#A8AFC0] text-sm leading-relaxed border-t border-[#232838]/50 pt-4">
+                <div className="px-6 pb-6 text-[#737490] text-sm leading-relaxed border-t border-[#252733]/50 pt-4">
                   {faq.answer}
                 </div>
               </details>
@@ -392,7 +392,7 @@ export default function LandingPage() {
       </section>
 
       {/* FOUNDER SPACE */}
-      <section className="relative z-10 border-t border-[#00C896]/15 bg-gradient-to-b from-[#047857]/5 to-[#07090F] py-24 px-6">
+      <section className="relative z-10 border-t border-[#00C896]/15 bg-gradient-to-b from-[#047857]/5 to-[#0F1117] py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00C896]/10 border border-[#00C896]/30 mb-6">
@@ -404,28 +404,28 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="bg-[#11141B]/80 backdrop-blur-sm border border-[#00C896]/20 rounded-[32px] p-8 md:p-12 shadow-[0_0_60px_-15px_rgba(0,200,150,0.15)] grid md:grid-cols-[auto_1fr] gap-10 items-start">
+          <div className="bg-[#1C1E28]/80 backdrop-blur-sm border border-[#00C896]/20 rounded-[32px] p-8 md:p-12 shadow-[0_0_60px_-15px_rgba(0,200,150,0.15)] grid md:grid-cols-[auto_1fr] gap-10 items-start">
             <div className="flex md:flex-col items-center md:items-start gap-4 md:gap-5 md:w-44 shrink-0">
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-br from-[#00C896] to-[#047857] flex items-center justify-center text-white text-2xl font-black shadow-[0_10px_30px_-5px_rgba(0,200,150,0.4)] shrink-0">
                 IM
               </div>
               <div>
                 <p className="text-white font-black">IdanMagkk</p>
-                <p className="text-[#5C6478] text-xs font-bold">MAGKK.TECK</p>
+                <p className="text-[#737490] text-xs font-bold">MAGKK.TECK</p>
                 <p className="text-[#00C896] text-xs font-bold mt-1">Founder, VELO</p>
               </div>
             </div>
             <div className="space-y-5">
-              <p className="text-[#C5C5D5] leading-relaxed">
+              <p className="text-[#EEEEF5] leading-relaxed">
                 I built Receipta because I saw too many hardworking vendors losing deals and facing disputes simply because their receipts looked unprofessional or couldn't be verified.
               </p>
-              <p className="text-[#C5C5D5] leading-relaxed">
+              <p className="text-[#EEEEF5] leading-relaxed">
                 My goal is simple: give every Nigerian vendor — whether you sell gadgets, fashion, food, or run an Instagram business — a tool that makes you look bigger, builds instant customer trust, and helps you run your business with clarity.
               </p>
               <div className="flex items-center gap-3 pt-2">
-                <a href="https://x.com/IdanMagkk" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-[#161B24] border border-[#232838] flex items-center justify-center text-[#A8AFC0] font-black text-sm hover:bg-[#00C896] hover:text-[#07090F] hover:border-[#00C896] transition-all">X</a>
-                <a href="https://instagram.com/magkk_tigrr8" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-[#161B24] border border-[#232838] flex items-center justify-center text-[#A8AFC0] hover:bg-[#00C896] hover:text-[#07090F] hover:border-[#00C896] transition-all"><Instagram className="w-4 h-4" /></a>
-                <a href="https://github.com/magkkteck08" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-[#161B24] border border-[#232838] flex items-center justify-center text-[#A8AFC0] hover:bg-[#00C896] hover:text-[#07090F] hover:border-[#00C896] transition-all"><Github className="w-4 h-4" /></a>
+                <a href="https://x.com/IdanMagkk" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-[#15171F] border border-[#252733] flex items-center justify-center text-[#737490] font-black text-sm hover:bg-[#00C896] hover:text-[#0F1117] hover:border-[#00C896] transition-all">X</a>
+                <a href="https://instagram.com/magkk_tigrr8" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-[#15171F] border border-[#252733] flex items-center justify-center text-[#737490] hover:bg-[#00C896] hover:text-[#0F1117] hover:border-[#00C896] transition-all"><Instagram className="w-4 h-4" /></a>
+                <a href="https://github.com/magkkteck08" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-[#15171F] border border-[#252733] flex items-center justify-center text-[#737490] hover:bg-[#00C896] hover:text-[#0F1117] hover:border-[#00C896] transition-all"><Github className="w-4 h-4" /></a>
               </div>
             </div>
           </div>
@@ -437,11 +437,11 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto bg-gradient-to-br from-[#00C896] to-[#047857] rounded-[40px] p-10 md:p-16 text-center relative overflow-hidden shadow-[0_0_60px_-15px_rgba(0,200,150,0.3)]">
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-5xl font-black text-[#07090F] mb-6 tracking-tight">Ready to look more professional?</h2>
-            <p className="text-[#07090F]/80 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10">
+            <h2 className="text-3xl md:text-5xl font-black text-[#0F1117] mb-6 tracking-tight">Ready to look more professional?</h2>
+            <p className="text-[#0F1117]/80 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10">
               Join the vendors using Receipta to build trust and eliminate payment disputes today.
             </p>
-            <Link href="/login" className="inline-flex items-center px-8 py-4 bg-[#07090F] text-white text-base font-black rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all">
+            <Link href="/login" className="inline-flex items-center px-8 py-4 bg-[#0F1117] text-white text-base font-black rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all">
               CREATE FREE ACCOUNT <ArrowRight className="w-5 h-5 ml-2 text-[#00C896]" />
             </Link>
           </div>
@@ -449,7 +449,7 @@ export default function LandingPage() {
       </section>
 
       {/* EXPANDED FOOTER */}
-      <footer className="border-t border-[#1E2430] bg-[#07090F] pt-16 pb-8 px-6 relative z-10">
+      <footer className="border-t border-[#252733] bg-[#0F1117] pt-16 pb-8 px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-1">
@@ -459,44 +459,44 @@ export default function LandingPage() {
                 </div>
                 <span className="text-xl font-black text-white tracking-tight">Receipta</span>
               </div>
-              <p className="text-[#8B92A6] text-sm leading-relaxed mb-6">
+              <p className="text-[#737490] text-sm leading-relaxed mb-6">
                 The professional digital receipt generator built specifically to help modern vendors scale safely.
               </p>
-              <a href="mailto:support@receipta.com" className="inline-flex items-center text-[#A8AFC0] hover:text-[#00C896] transition-colors text-sm font-bold">
+              <a href="mailto:support@receipta.com" className="inline-flex items-center text-[#737490] hover:text-[#00C896] transition-colors text-sm font-bold">
                 <Mail className="w-4 h-4 mr-2" /> support@receipta.com
               </a>
             </div>
             <div>
               <h4 className="text-white font-bold mb-6 tracking-wider uppercase text-xs">Product</h4>
               <ul className="space-y-4">
-                <li><Link href="/login" className="text-[#8B92A6] hover:text-[#00C896] transition-colors text-sm">Pricing</Link></li>
-                <li><button onClick={() => setIsVerifyOpen(true)} className="text-[#8B92A6] hover:text-[#00C896] transition-colors text-sm">Verify a Receipt</button></li>
-                <li><Link href="/login" className="text-[#8B92A6] hover:text-[#00C896] transition-colors text-sm">Create Account</Link></li>
-                <li><Link href="/login" className="text-[#8B92A6] hover:text-[#00C896] transition-colors text-sm">Sign In</Link></li>
+                <li><Link href="/login" className="text-[#737490] hover:text-[#00C896] transition-colors text-sm">Pricing</Link></li>
+                <li><button onClick={() => setIsVerifyOpen(true)} className="text-[#737490] hover:text-[#00C896] transition-colors text-sm">Verify a Receipt</button></li>
+                <li><Link href="/login" className="text-[#737490] hover:text-[#00C896] transition-colors text-sm">Create Account</Link></li>
+                <li><Link href="/login" className="text-[#737490] hover:text-[#00C896] transition-colors text-sm">Sign In</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-bold mb-6 tracking-wider uppercase text-xs">Legal</h4>
               <ul className="space-y-4">
-                <li><Link href="#" className="text-[#8B92A6] hover:text-white transition-colors text-sm">Terms of Service</Link></li>
-                <li><Link href="#" className="text-[#8B92A6] hover:text-white transition-colors text-sm">Privacy Policy</Link></li>
-                <li><Link href="#" className="text-[#8B92A6] hover:text-white transition-colors text-sm">Refund Policy</Link></li>
+                <li><Link href="#" className="text-[#737490] hover:text-white transition-colors text-sm">Terms of Service</Link></li>
+                <li><Link href="#" className="text-[#737490] hover:text-white transition-colors text-sm">Privacy Policy</Link></li>
+                <li><Link href="#" className="text-[#737490] hover:text-white transition-colors text-sm">Refund Policy</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-bold mb-6 tracking-wider uppercase text-xs">Connect</h4>
               <ul className="space-y-4">
-                <li><a href="https://x.com/IdanMagkk" target="_blank" rel="noopener noreferrer" className="text-[#8B92A6] hover:text-[#00C896] transition-colors text-sm">Twitter (X)</a></li>
-                <li><a href="https://instagram.com/magkk_tigrr8" target="_blank" rel="noopener noreferrer" className="text-[#8B92A6] hover:text-[#00C896] transition-colors text-sm">Instagram</a></li>
-                <li><a href="https://github.com/magkkteck08" target="_blank" rel="noopener noreferrer" className="text-[#8B92A6] hover:text-[#00C896] transition-colors text-sm">Developer Github</a></li>
+                <li><a href="https://x.com/IdanMagkk" target="_blank" rel="noopener noreferrer" className="text-[#737490] hover:text-[#00C896] transition-colors text-sm">Twitter (X)</a></li>
+                <li><a href="https://instagram.com/magkk_tigrr8" target="_blank" rel="noopener noreferrer" className="text-[#737490] hover:text-[#00C896] transition-colors text-sm">Instagram</a></li>
+                <li><a href="https://github.com/magkkteck08" target="_blank" rel="noopener noreferrer" className="text-[#737490] hover:text-[#00C896] transition-colors text-sm">Developer Github</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-[#1E2430] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-[#5C6478] text-xs font-bold uppercase tracking-widest">
+          <div className="border-t border-[#252733] pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-[#737490] text-xs font-bold uppercase tracking-widest">
               &copy; {new Date().getFullYear()} Receipta. All rights reserved.
             </p>
-            <p className="text-[#5C6478] text-xs font-bold tracking-widest flex items-center">
+            <p className="text-[#737490] text-xs font-bold tracking-widest flex items-center">
               BUILT BY <span className="text-[#00C896] ml-1">VELO AGENCY</span>
             </p>
           </div>
@@ -507,9 +507,9 @@ export default function LandingPage() {
       {/* 🛡️ VERIFICATION MODAL OVERLAY */}
       {/* ======================================================== */}
       {isVerifyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#07090F]/90 backdrop-blur-sm transition-all">
-          <div className="bg-[#11141B] border border-[#232838] w-full max-w-lg rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-6 border-b border-[#232838]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F1117]/90 backdrop-blur-sm transition-all">
+          <div className="bg-[#1C1E28] border border-[#252733] w-full max-w-lg rounded-3xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-6 border-b border-[#252733]">
               <div className="flex items-center gap-2 text-white">
                 <ShieldCheck className="w-5 h-5 text-[#00C896]" />
                 <h3 className="font-bold">Verification Portal</h3>
@@ -520,7 +520,7 @@ export default function LandingPage() {
                   setVerifyResult(null);
                   setVerifyCode('');
                 }}
-                className="text-[#8B92A6] hover:text-white transition-colors p-1"
+                className="text-[#737490] hover:text-white transition-colors p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -533,22 +533,22 @@ export default function LandingPage() {
                   value={verifyCode}
                   onChange={(e) => setVerifyCode(e.target.value)}
                   placeholder="Enter Receipt ID (e.g. RCP-12345)" 
-                  className="w-full bg-[#161B24] border border-[#232838] text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#00C896] transition-colors placeholder:text-[#5C6478]"
+                  className="w-full bg-[#15171F] border border-[#252733] text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-[#00C896] transition-colors placeholder:text-[#737490]"
                   required
                 />
                 <button 
                   type="submit" 
                   disabled={verifyLoading}
-                  className="bg-[#00C896] text-[#07090F] px-5 rounded-xl font-bold hover:bg-[#5EEAD4] transition-colors flex items-center justify-center disabled:opacity-50"
+                  className="bg-[#00C896] text-[#0F1117] px-5 rounded-xl font-bold hover:bg-[#5EEAD4] transition-colors flex items-center justify-center disabled:opacity-50"
                 >
-                  {verifyLoading ? <div className="w-5 h-5 border-2 border-[#07090F] border-t-transparent rounded-full animate-spin"></div> : <Search className="w-5 h-5" />}
+                  {verifyLoading ? <div className="w-5 h-5 border-2 border-[#0F1117] border-t-transparent rounded-full animate-spin"></div> : <Search className="w-5 h-5" />}
                 </button>
               </form>
 
               {verifyLoading && (
                 <div className="flex flex-col items-center justify-center py-12">
                   <ShieldCheck className="w-12 h-12 text-[#00C896] animate-pulse mb-4" />
-                  <p className="text-[#8B92A6] font-bold tracking-widest text-xs uppercase animate-pulse">Scanning Database...</p>
+                  <p className="text-[#737490] font-bold tracking-widest text-xs uppercase animate-pulse">Scanning Database...</p>
                 </div>
               )}
 
@@ -556,7 +556,7 @@ export default function LandingPage() {
                 <div className="bg-[#FB7185]/10 border border-[#FB7185]/30 rounded-2xl p-6 text-center">
                   <XCircle className="w-10 h-10 text-[#FB7185] mx-auto mb-3" />
                   <h4 className="text-white font-bold mb-2">Invalid Record</h4>
-                  <p className="text-[#8B92A6] text-sm leading-relaxed">
+                  <p className="text-[#737490] text-sm leading-relaxed">
                     This verification code does not exist in our system. The receipt may be fraudulent or digitally altered.
                   </p>
                 </div>
@@ -571,10 +571,10 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <div className="bg-[#161B24] border border-[#232838] rounded-2xl overflow-hidden">
-                    <div className="bg-[#1E2430]/50 border-b border-[#232838] p-5 text-center">
+                  <div className="bg-[#15171F] border border-[#252733] rounded-2xl overflow-hidden">
+                    <div className="bg-[#1C1E28]/50 border-b border-[#252733] p-5 text-center">
                        {verifyResult.businesses?.logo_url ? (
-                         <img src={verifyResult.businesses.logo_url} alt="Logo" className="w-12 h-12 object-cover rounded-xl mx-auto mb-2 border border-[#232838]" />
+                         <img src={verifyResult.businesses.logo_url} alt="Logo" className="w-12 h-12 object-cover rounded-xl mx-auto mb-2 border border-[#252733]" />
                        ) : (
                          <div className="w-12 h-12 bg-gradient-to-br from-[#00C896] to-[#047857] rounded-xl flex items-center justify-center mx-auto mb-2">
                            <Store className="w-6 h-6 text-white" />
@@ -584,8 +584,8 @@ export default function LandingPage() {
                     </div>
 
                     <div className="p-5 space-y-3">
-                      <div className="bg-[#11141B] border border-[#232838] p-4 rounded-xl flex items-center justify-between">
-                        <div className="flex items-center text-[#A8AFC0]">
+                      <div className="bg-[#1C1E28] border border-[#252733] p-4 rounded-xl flex items-center justify-between">
+                        <div className="flex items-center text-[#EEEEF5]">
                           <CreditCard className="w-4 h-4 mr-2 text-[#00C896]" />
                           <span className="text-xs font-bold uppercase tracking-wider">Total Paid</span>
                         </div>
@@ -595,24 +595,24 @@ export default function LandingPage() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-[#11141B] border border-[#232838] p-3 rounded-xl">
-                          <p className="text-[#5C6478] text-[9px] uppercase font-bold tracking-widest mb-1 flex items-center"><Calendar className="w-3 h-3 mr-1"/> Date</p>
+                        <div className="bg-[#1C1E28] border border-[#252733] p-3 rounded-xl">
+                          <p className="text-[#737490] text-[9px] uppercase font-bold tracking-widest mb-1 flex items-center"><Calendar className="w-3 h-3 mr-1"/> Date</p>
                           <p className="text-white text-xs font-bold">{getFormattedDate(verifyResult.created_at)}</p>
                         </div>
-                        <div className="bg-[#11141B] border border-[#232838] p-3 rounded-xl">
-                          <p className="text-[#5C6478] text-[9px] uppercase font-bold tracking-widest mb-1 flex items-center"><Receipt className="w-3 h-3 mr-1"/> Receipt No.</p>
+                        <div className="bg-[#1C1E28] border border-[#252733] p-3 rounded-xl">
+                          <p className="text-[#737490] text-[9px] uppercase font-bold tracking-widest mb-1 flex items-center"><Receipt className="w-3 h-3 mr-1"/> Receipt No.</p>
                           <p className="text-white text-xs font-mono font-bold truncate">{verifyResult.receipt_number}</p>
                         </div>
                       </div>
 
-                      <div className="bg-[#11141B] border border-[#232838] p-4 rounded-xl">
-                        <p className="text-[#5C6478] text-[9px] uppercase font-bold tracking-widest mb-3 flex items-center"><ShoppingBag className="w-3 h-3 mr-1"/> Items</p>
+                      <div className="bg-[#1C1E28] border border-[#252733] p-4 rounded-xl">
+                        <p className="text-[#737490] text-[9px] uppercase font-bold tracking-widest mb-3 flex items-center"><ShoppingBag className="w-3 h-3 mr-1"/> Items</p>
                         <div className="space-y-2">
                           {verifyResult.receipt_items?.map((item: any) => (
-                            <div key={item.id} className="flex justify-between items-start border-b border-[#232838]/50 pb-2 last:border-0 last:pb-0">
+                            <div key={item.id} className="flex justify-between items-start border-b border-[#252733]/50 pb-2 last:border-0 last:pb-0">
                               <div>
                                 <p className="text-white text-xs font-bold">{item.item_name}</p>
-                                <p className="text-[#8B92A6] text-[10px] mt-0.5">Qty: {item.quantity}</p>
+                                <p className="text-[#737490] text-[10px] mt-0.5">Qty: {item.quantity}</p>
                               </div>
                               <p className="text-white text-xs font-mono font-bold">
                                 {verifyResult.businesses?.currency || '₦'}{Number(item.total_price).toLocaleString()}
