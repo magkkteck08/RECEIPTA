@@ -15,7 +15,6 @@ async function handleLogin(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   
-  // 🚨 USING NEXT_PUBLIC_ TO FORCE VERCEL TO EXPOSE IT
   const founderEmail = process.env.NEXT_PUBLIC_FOUNDER_EMAIL?.toLowerCase() || 'MISSING_IN_VERCEL'
 
   const supabase = await createServerClient()
@@ -56,7 +55,6 @@ export default async function SuperAdminDashboard({
   const supabaseAuth = await createServerClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()
 
-  // 🚨 USING NEXT_PUBLIC_ HERE AS WELL
   const FOUNDER_EMAIL = process.env.NEXT_PUBLIC_FOUNDER_EMAIL?.toLowerCase()
 
   // ==========================================
@@ -137,7 +135,8 @@ export default async function SuperAdminDashboard({
     { data: receiptsData },
     { data: recentBusinesses }
   ] = await Promise.all([
-    supabaseAdmin.from('businesses').select('id, subscription'),
+    // 🚨 Updated to fetch subscription_tier
+    supabaseAdmin.from('businesses').select('id, subscription_tier'),
     supabaseAdmin.from('receipts').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('receipts').select('grand_total'),
     supabaseAdmin.from('businesses').select('*').order('created_at', { ascending: false }).limit(10)
@@ -154,8 +153,9 @@ export default async function SuperAdminDashboard({
   let paidUsersCount = 0;
   const totalUsers = allBusinesses?.length || 0;
 
+  // 🚨 Updated engine to use biz.subscription_tier
   allBusinesses?.forEach((biz) => {
-    const subType = (biz.subscription || 'free').toLowerCase(); 
+    const subType = (biz.subscription_tier || 'free').toLowerCase(); 
     if (subType === 'basic') {
       calculatedMRR += BASIC_PLAN_PRICE;
       paidUsersCount++;
@@ -252,12 +252,13 @@ export default async function SuperAdminDashboard({
                   <td className="px-6 py-4 font-bold text-white">{business.business_name || business.full_name || 'Unnamed Business'}</td>
                   <td className="px-6 py-4">{business.business_email || business.business_phone || 'N/A'}</td>
                   <td className="px-6 py-4">
+                    {/* 🚨 Updated table UI to pull from business.subscription_tier */}
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
-                      (business.subscription || 'free').toLowerCase() === 'premium' ? 'bg-[#FF6B4A]/10 text-[#FF6B4A] border-[#FF6B4A]/20' : 
-                      (business.subscription || 'free').toLowerCase() === 'basic' ? 'bg-[#4A90E2]/10 text-[#4A90E2] border-[#4A90E2]/20' : 
+                      (business.subscription_tier || 'free').toLowerCase() === 'premium' ? 'bg-[#FF6B4A]/10 text-[#FF6B4A] border-[#FF6B4A]/20' : 
+                      (business.subscription_tier || 'free').toLowerCase() === 'basic' ? 'bg-[#4A90E2]/10 text-[#4A90E2] border-[#4A90E2]/20' : 
                       'bg-[#5C6478]/10 text-[#8B92A6] border-[#5C6478]/20'
                     }`}>
-                      {business.subscription || 'Free'}
+                      {business.subscription_tier || 'Free'}
                     </span>
                   </td>
                   <td className="px-6 py-4">{new Date(business.created_at).toLocaleDateString()}</td>
