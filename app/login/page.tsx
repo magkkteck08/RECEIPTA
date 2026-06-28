@@ -1,5 +1,10 @@
+'use client'
+
+import { useState, Suspense } from 'react'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import { login, signup } from './actions'
+import { createClient } from '@/utils/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,13 +12,26 @@ import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import { ShieldCheck } from 'lucide-react'
 
-export default async function LoginPage({ 
-  searchParams 
-}: { 
-  searchParams: Promise<{ message: string }> 
-}) {
-  // Await the searchParams (Required for Next.js 15+)
-  const params = await searchParams;
+function LoginContent() {
+  const searchParams = useSearchParams()
+  const message = searchParams.get('message')
+  
+  const [loadingGoogle, setLoadingGoogle] = useState(false)
+
+  // --- GOOGLE SIGN-IN FUNCTION ---
+  const handleGoogleSignIn = async () => {
+    setLoadingGoogle(true)
+    const supabase = createClient()
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${origin}/dashboard`,
+      },
+    })
+    // Note: We don't need to set loading to false here because the browser will redirect automatically
+  }
 
   return (
     <div className="min-h-screen bg-[#0F1117] flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
@@ -73,9 +91,9 @@ export default async function LoginPage({
               </div>
               
               {/* Show error messages if they fail to login/signup */}
-              {params?.message && (
+              {message && (
                 <div className="p-3 bg-[#FB7185]/10 border border-[#FB7185]/30 rounded-lg text-center mt-4">
-                  <p className="text-[#FB7185] text-xs font-bold">{params.message}</p>
+                  <p className="text-[#FB7185] text-xs font-bold">{message}</p>
                 </div>
               )}
 
@@ -90,6 +108,29 @@ export default async function LoginPage({
               </div>
 
             </form>
+
+            {/* --- GOOGLE OAUTH SECTION --- */}
+            <div className="relative flex items-center py-6">
+              <div className="flex-grow border-t border-[#252733]"></div>
+              <span className="shrink-0 px-4 text-[#737490] text-[10px] font-bold uppercase tracking-widest">Or continue with</span>
+              <div className="flex-grow border-t border-[#252733]"></div>
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={loadingGoogle}
+              className="w-full h-14 bg-[#15171F] border border-[#252733] text-white hover:bg-[#252733] hover:text-white transition-all rounded-xl font-bold text-sm flex items-center justify-center gap-3"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#EA4335" d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z"/>
+                <path fill="#34A853" d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z"/>
+                <path fill="#4A90E2" d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z"/>
+                <path fill="#FBBC05" d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z"/>
+              </svg>
+              {loadingGoogle ? 'CONNECTING...' : 'GOOGLE'}
+            </Button>
+
           </CardContent>
         </Card>
 
@@ -100,5 +141,18 @@ export default async function LoginPage({
 
       </div>
     </div>
+  )
+}
+
+// Next.js requires useSearchParams to be wrapped in a Suspense boundary
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0F1117] flex items-center justify-center">
+        <ShieldCheck className="w-12 h-12 text-[#FF6B4A] animate-pulse" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }
