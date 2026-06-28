@@ -5,51 +5,65 @@ import { Activity, Users, FileText, Wallet, ShieldAlert, LogOut, ArrowLeft } fro
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 
+// ==========================================
+// 1. SERVER ACTIONS (Moved outside for stability)
+// ==========================================
+async function handleLogin(formData: FormData) {
+  'use server'
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const founderEmail = process.env.FOUNDER_EMAIL?.toLowerCase() || ''
+
+  // 1. Verify credentials with Supabase
+  const supabase = await createServerClient()
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  // 2. Catch invalid passwords
+  if (error) {
+    redirect('/super-admin?error=Invalid admin credentials')
+  }
+  
+  // 3. Catch unauthorized emails (The Silent Reload Fix)
+  if (email.toLowerCase() !== founderEmail) {
+    await supabase.auth.signOut() // Log them back out for security
+    redirect('/super-admin?error=Unauthorized: This email is not set as the Founder')
+  }
+
+  // 4. Success: reload the page to show the dashboard
+  redirect('/super-admin')
+}
+
+async function handleLogout() {
+  'use server'
+  const supabase = await createServerClient()
+  await supabase.auth.signOut()
+  redirect('/super-admin')
+}
+
+// ==========================================
+// 2. MAIN COMPONENT
+// ==========================================
 export default async function SuperAdminDashboard({ 
   searchParams 
 }: { 
-  searchParams: Promise<{ error: string }> 
+  searchParams: Promise<{ error?: string }> 
 }) {
-  // Await searchParams for error messages (Next.js 15+)
+  // Await searchParams for error messages
   const params = await searchParams;
 
-  // 1. STANDARD CLIENT: Check who is currently logged in
+  // Check who is currently logged in
   const supabaseAuth = await createServerClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()
 
-  const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL 
-
-  // --- SERVER ACTIONS FOR LOGIN / LOGOUT ---
-  async function handleLogin(formData: FormData) {
-    'use server'
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    const supabase = await createServerClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      redirect('/super-admin?error=Invalid admin credentials')
-    }
-    
-    // Success: reload the page to show the dashboard
-    redirect('/super-admin')
-  }
-
-  async function handleLogout() {
-    'use server'
-    const supabase = await createServerClient()
-    await supabase.auth.signOut()
-    redirect('/super-admin')
-  }
+  const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL?.toLowerCase()
 
   // ==========================================
   // VIEW 1: THE LOGIN SCREEN (UNAUTHORIZED)
   // ==========================================
-  if (!user || user.email !== FOUNDER_EMAIL) {
+  if (!user || user.email?.toLowerCase() !== FOUNDER_EMAIL) {
     return (
       <div className="min-h-screen bg-[#07090F] flex flex-col items-center justify-center p-4 relative font-sans">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00C896] rounded-full blur-[200px] opacity-[0.08] pointer-events-none"></div>
@@ -64,6 +78,8 @@ export default async function SuperAdminDashboard({
           </div>
 
           <form action={handleLogin} className="bg-[#11141B] border border-[#232838] p-8 rounded-[2rem] shadow-2xl space-y-5">
+            
+            {/* 🚨 THE ERROR MESSAGE BOX */}
             {params?.error && (
               <div className="p-3 bg-[#FB7185]/10 border border-[#FB7185]/30 rounded-lg text-center">
                 <p className="text-[#FB7185] text-xs font-bold">{params.error}</p>
@@ -223,7 +239,7 @@ export default async function SuperAdminDashboard({
         </Card>
       </div>
 
-      {/* Recent Users Matrix - Mobile Swipe Enabled! */}
+      {/* Recent Users Matrix */}
       <h2 className="text-xl font-bold text-white mb-6">Latest Vendor Signups</h2>
       <div className="bg-[#11141B] border border-[#232838] rounded-2xl w-full">
         <div className="overflow-x-auto">
