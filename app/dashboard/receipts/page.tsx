@@ -20,9 +20,6 @@ export default function CreateReceiptPage() {
   const [saving, setSaving] = useState(false)
   const [business, setBusiness] = useState<any>(null)
 
-  // Document Type State (NEW)
-  const [documentType, setDocumentType] = useState('Receipt')
-
   // Form State
   const [customer, setCustomer] = useState({ name: '', phone: '', email: '' })
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer')
@@ -111,16 +108,12 @@ export default function CreateReceiptPage() {
         throw new Error("Please provide an Item Name for all products.")
       }
 
-      // Dynamically adjust prefix based on document type
-      const prefix = documentType === 'Invoice' ? (business.invoice_prefix || 'INV') : documentType === 'Quote' ? (business.quote_prefix || 'QT') : business.receipt_prefix;
-      
-      const receiptNumber = `${prefix}-${business.receipt_start_number + Math.floor(Math.random() * 1000)}`
+      const receiptNumber = `${business.receipt_prefix}-${business.receipt_start_number + Math.floor(Math.random() * 1000)}`
       const verificationCode = `VRF-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
 
-      // Insert Master Record
+      // Insert Receipt Master Record
       const { data: receipt, error: receiptError } = await supabase.from('receipts').insert({
         business_id: business.id,
-        type: documentType, // Included the type so your database knows what was generated
         receipt_number: receiptNumber,
         verification_code: verificationCode,
         payment_method: paymentMethod,
@@ -131,7 +124,7 @@ export default function CreateReceiptPage() {
         discount_amount: discountAmount,
         shipping_fee: Number(shipping) || 0,
         grand_total: grandTotal,
-        amount_paid: documentType === 'Quote' ? 0 : grandTotal, // Quotes usually don't have paid amounts yet
+        amount_paid: grandTotal, 
         warranty_days: business.default_warranty_days || 0,
       }).select().single()
 
@@ -176,8 +169,7 @@ export default function CreateReceiptPage() {
       const { error: itemsError } = await supabase.from('receipt_items').insert(lineItems)
       if (itemsError) throw itemsError
 
-      // Dynamic Success Message
-      toast.success(`${documentType} Generated Successfully! 🎉`, { 
+      toast.success('Receipt Generated Successfully! 🎉', { 
         style: { background: '#1C1E28', color: '#FF6B4A', border: '1px solid #252733' } 
       })
       
@@ -210,30 +202,10 @@ export default function CreateReceiptPage() {
 
       <form onSubmit={handleGenerateReceipt} className="relative z-10 p-4 md:p-8">
         
-        {/* Header - UPDATED WITH TOGGLE */}
-        <div className="border-b border-[#252733] pb-6 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">Create {documentType}</h1>
-            <p className="text-[#737490] mt-1 text-sm">Fill in the transaction details to generate a secure {documentType.toLowerCase()}.</p>
-          </div>
-
-          {/* Document Type Toggle Switch */}
-          <div className="flex bg-[#15171F] p-1 rounded-xl border border-[#252733] self-start md:self-auto">
-            {['Receipt', 'Invoice', 'Quote'].map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setDocumentType(type)}
-                className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${
-                  documentType === type
-                    ? 'bg-[#1C1E28] text-[#FF6B4A] shadow-md border border-[#252733]'
-                    : 'text-[#737490] hover:text-white'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
+        {/* Header */}
+        <div className="border-b border-[#252733] pb-6 mb-8">
+          <h1 className="text-3xl font-black text-white tracking-tight">Create Receipt</h1>
+          <p className="text-[#737490] mt-1 text-sm">Fill in the transaction details to generate a secure invoice.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -529,7 +501,7 @@ export default function CreateReceiptPage() {
                     className="w-full h-14 mt-6 bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] hover:from-[#E05535] hover:to-[#10B981] font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(110,231,183,0.2)] hover:shadow-[0_0_30px_rgba(110,231,183,0.4)] transition-all"
                   >
                     <Save className="w-5 h-5 mr-2" /> 
-                    {saving ? 'GENERATING...' : `ISSUE ${documentType.toUpperCase()}`}
+                    {saving ? 'GENERATING...' : 'ISSUE RECEIPT'}
                   </Button>
                   
                   <p className="text-center text-[10px] text-[#737490] uppercase tracking-widest mt-4">
