@@ -289,8 +289,8 @@ export default function LandingPage() {
               <h3 className="text-xl font-black text-white mb-2">Basic</h3>
               <p className="text-[#737490] text-sm mb-6">For growing daily vendors.</p>
               <div className="mb-8">
-                <span className="text-4xl font-black text-white">₦1,000</span>
-                <span className="text-[#737490]"> / month</span>
+                <span className="text-4xl font-black text-white">₦17,000</span>
+                <span className="text-[#737490]"> / year</span>
               </div>
               <div className="space-y-4 mb-8 flex-1">
                 <div className="flex items-start gap-3">
@@ -315,7 +315,7 @@ export default function LandingPage() {
               <h3 className="text-xl font-black text-white mb-2">Premium</h3>
               <p className="text-[#737490] text-sm mb-6">Unlimited power for power users.</p>
               <div className="mb-8">
-                <span className="text-4xl font-black text-white">₦12,000</span>
+                <span className="text-4xl font-black text-white">#25,000</span>
                 <span className="text-[#737490]"> / year</span>
               </div>
               <div className="space-y-4 mb-8 flex-1">
