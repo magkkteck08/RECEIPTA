@@ -15,17 +15,25 @@ export default async function DashboardHome() {
     .single()
 
   // 2. Fetch ALL Receipts for this specific business
+  // 🚀 ADDED: amount_paid and document_type to the query
   const { data: receipts } = await supabase
     .from('receipts')
-    .select('id, receipt_number, grand_total, created_at, payment_method, customer_id')
+    .select('id, receipt_number, grand_total, amount_paid, document_type, created_at, payment_method, customer_id')
     .eq('business_id', business?.id)
     .order('created_at', { ascending: false }) // Newest first
 
   // 3. The Math Engine (Calculates live data!)
   const safeReceipts = receipts || []
-  const totalRevenue = safeReceipts.reduce((sum, r) => sum + Number(r.grand_total), 0)
+  
+  // 🐛 BUG FIX: Sum only the amount_paid! Unpaid Invoices/Quotes will add 0 to this total.
+  const totalRevenue = safeReceipts.reduce((sum, r) => sum + Number(r.amount_paid || 0), 0)
+  
+  // Count total documents generated
   const receiptsIssued = safeReceipts.length
-  const avgTicket = receiptsIssued > 0 ? (totalRevenue / receiptsIssued) : 0
+  
+  // Calculate average ticket size based ONLY on actual paid revenue and paid receipts
+  const paidReceiptsCount = safeReceipts.filter(r => r.amount_paid > 0).length
+  const avgTicket = paidReceiptsCount > 0 ? (totalRevenue / paidReceiptsCount) : 0
   
   // For now, we estimate customers by the number of receipts issued
   const totalCustomers = receiptsIssued 
@@ -50,7 +58,7 @@ export default async function DashboardHome() {
           <p className="text-[#EEEEF5] mt-2 text-sm font-medium">Here is your Receipta financial overview.</p>
         </div>
         <Link href="/dashboard/receipts/new" className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#00C896] to-[#00A67C] text-[#0F1117] font-bold text-sm shadow-[0_0_15px_rgba(0,200,150,0.3)] hover:shadow-[0_0_25px_rgba(0,200,150,0.5)] transition-all">
-          <Receipt className="w-4 h-4 mr-2" /> New Receipt
+          <Receipt className="w-4 h-4 mr-2" /> New Document
         </Link>
       </div>
 
@@ -70,11 +78,11 @@ export default async function DashboardHome() {
           </CardContent>
         </Card>
 
-        {/* Receipts Issued */}
+        {/* Documents Issued */}
         <Card className="bg-[#1C1E28] border-[#252733] shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#60A5FA] opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity"></div>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-bold text-[#EEEEF5] uppercase tracking-wider">Receipts Issued</CardTitle>
+            <CardTitle className="text-xs font-bold text-[#EEEEF5] uppercase tracking-wider">Documents Issued</CardTitle>
             <div className="p-2 bg-[#60A5FA]/10 rounded-lg"><Receipt className="h-4 w-4 text-[#60A5FA]" /></div>
           </CardHeader>
           <CardContent>
@@ -105,7 +113,7 @@ export default async function DashboardHome() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-black text-white">{formatCurrency(avgTicket)}</div>
-            <p className="text-xs text-[#737490] mt-1 font-medium">Per receipt average</p>
+            <p className="text-xs text-[#737490] mt-1 font-medium">Per paid receipt</p>
           </CardContent>
         </Card>
 
@@ -127,9 +135,9 @@ export default async function DashboardHome() {
             <div className="w-12 h-12 bg-[#1C1E28] rounded-full flex items-center justify-center mb-3 border border-[#252733]">
               <Receipt className="w-6 h-6 text-[#737490]" />
             </div>
-            <p className="text-[#EEEEF5] text-sm font-medium">No receipts generated yet.</p>
+            <p className="text-[#EEEEF5] text-sm font-medium">No documents generated yet.</p>
             <Link href="/dashboard/receipts/new" className="mt-3 text-[#00C896] text-sm font-bold hover:underline">
-              Create your first receipt →
+              Create your first document →
             </Link>
           </div>
         ) : (
@@ -138,10 +146,10 @@ export default async function DashboardHome() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#15171F] border-b border-[#252733]">
-                    <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490]">Receipt No.</th>
+                    <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490]">Doc No.</th>
                     <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490]">Date</th>
-                    <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490]">Payment</th>
-                    <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490] text-right">Amount</th>
+                    <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490]">Type</th>
+                    <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490] text-right">Value</th>
                     <th className="py-4 px-6 text-[11px] font-bold uppercase tracking-widest text-[#737490] text-center">Action</th>
                   </tr>
                 </thead>
@@ -153,12 +161,20 @@ export default async function DashboardHome() {
                         {new Date(receipt.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
                       <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#252733] text-[#EEEEF5]">
-                          {receipt.payment_method}
+                        {/* 🚀 ADDED: Dynamic Badge for Document Type */}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          receipt.document_type === 'Quotation' ? 'bg-[#F4C542]/20 text-[#F4C542]' :
+                          receipt.document_type === 'Invoice' ? 'bg-[#60A5FA]/20 text-[#60A5FA]' :
+                          'bg-[#00C896]/20 text-[#00C896]'
+                        }`}>
+                          {receipt.document_type || 'Receipt'}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-sm font-black text-[#00C896] text-right">
-                        {formatCurrency(Number(receipt.grand_total))}
+                      <td className="py-4 px-6 text-sm font-black text-right">
+                        {/* If it is unpaid, make the text grey instead of green */}
+                        <span className={receipt.amount_paid > 0 ? "text-[#00C896]" : "text-[#737490]"}>
+                          {formatCurrency(Number(receipt.grand_total))}
+                        </span>
                       </td>
                       <td className="py-4 px-6 text-center">
                         <Link href={`/dashboard/receipts/${receipt.id}`} className="inline-flex items-center text-[#EEEEF5] hover:text-white transition-colors p-2 hover:bg-[#252733] rounded-lg">
