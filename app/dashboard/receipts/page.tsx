@@ -100,7 +100,7 @@ export default function CreateReceiptPage() {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
 
-  // 🚀 SAVE TO DATABASE 
+  // 🚀 UPDATED SAVE LOGIC
   async function handleGenerateReceipt(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -114,13 +114,17 @@ export default function CreateReceiptPage() {
       const receiptNumber = `${business.receipt_prefix}-${business.receipt_start_number + Math.floor(Math.random() * 1000)}`
       const verificationCode = `VRF-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
 
+      // Calculate Paid Status based on type
+      // Invoices and Quotations start with 0 paid. Receipts are fully paid.
+      const isPaid = documentType === 'Receipt' ? grandTotal : 0
+
       // Insert Document Master Record with Dynamic Type
       const { data: receipt, error: receiptError } = await supabase.from('receipts').insert({
         business_id: business.id,
         receipt_number: receiptNumber,
         verification_code: verificationCode,
-        document_type: documentType, // 🚀 Saves whether it is a Receipt, Invoice, or Quotation
-        payment_method: documentType === 'Quotation' ? null : paymentMethod, // Drop payment method if quotation
+        document_type: documentType, // 'Receipt', 'Invoice', or 'Quotation'
+        payment_method: documentType === 'Quotation' ? null : paymentMethod,
         subtotal: subtotal,
         tax_percentage: taxRate,
         tax_amount: taxAmount,
@@ -128,7 +132,7 @@ export default function CreateReceiptPage() {
         discount_amount: discountAmount,
         shipping_fee: Number(shipping) || 0,
         grand_total: grandTotal,
-        amount_paid: documentType === 'Receipt' ? grandTotal : 0, // Receipts are paid, Invoices/Quotes are not
+        amount_paid: isPaid, // 👈 KEY FIX: Invoices/Quotes don't add to "Volume" yet
         warranty_days: business.default_warranty_days || 0,
       }).select().single()
 
@@ -173,8 +177,8 @@ export default function CreateReceiptPage() {
       const { error: itemsError } = await supabase.from('receipt_items').insert(lineItems)
       if (itemsError) throw itemsError
 
-      toast.success(`${documentType} Generated Successfully! 🎉`, { 
-        style: { background: '#1C1E28', color: '#FF6B4A', border: '1px solid #252733' } 
+      toast.success(`${documentType} created!`, { 
+        style: { background: '#1C1E28', color: '#00C896' } 
       })
       
       router.push(`/dashboard/receipts/${receipt.id}`) 
@@ -282,12 +286,15 @@ export default function CreateReceiptPage() {
             {/* Line Items Card */}
             <Card className="bg-[#1C1E28] border-[#252733] shadow-xl overflow-hidden">
               <CardHeader className="bg-[#15171F] border-b border-[#252733] pb-4 flex flex-row items-center justify-between">
+                
+                {/* 📄 DYNAMIC CARD TITLE INSTALLED HERE */}
                 <CardTitle className="flex items-center text-white text-lg">
                   <div className="p-2 bg-[#F4C542]/10 rounded-lg mr-3">
                     <Receipt className="w-5 h-5 text-[#F4C542]" />
                   </div>
-                  Purchased Items
+                  {documentType === 'Quotation' ? 'Items to Quote' : documentType === 'Invoice' ? 'Invoice Items' : 'Purchased Items'}
                 </CardTitle>
+
               </CardHeader>
               <CardContent className="p-6 space-y-6">
                 
