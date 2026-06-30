@@ -49,9 +49,25 @@ export default function ReceiptPreview() {
     fetchReceipt()
   }, [params.id, router, supabase])
 
+  // 🔄 DATABASE UPDATE: Change Document Type on the fly
+  const handleTypeChange = async (newType: string) => {
+    setReceipt({ ...receipt, document_type: newType })
+    
+    const { error } = await supabase
+      .from('receipts')
+      .update({ document_type: newType })
+      .eq('id', receipt.id)
+
+    if (error) {
+      toast.error('Failed to update document type')
+    } else {
+      toast.success(`Switched to ${newType} 📄`)
+    }
+  }
+
   const handlePrint = () => window.print()
 
-  // 📄 DYNAMIC WHATSAPP MESSAGE (Adapts automatically based on Document Type)
+  // 📄 DYNAMIC WHATSAPP MESSAGE
   const handleWhatsApp = () => {
     const businessName = receipt?.businesses?.business_name
     const currency = receipt?.businesses?.currency || '₦'
@@ -149,16 +165,28 @@ export default function ReceiptPreview() {
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Link>
         
-        <div className="flex flex-wrap justify-center sm:justify-end gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2 w-full md:w-auto">
+          
+          {/* 🔄 THE DOCUMENT TYPE SELECTOR */}
+          <select
+            value={docType}
+            onChange={(e) => handleTypeChange(e.target.value)}
+            className="bg-[#0D1117] border border-[#21262D] text-[#00C896] rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-wider outline-none focus:border-[#00C896] transition-colors cursor-pointer"
+          >
+            <option value="Receipt">Receipt</option>
+            <option value="Invoice">Invoice</option>
+            <option value="Quotation">Quotation</option>
+          </select>
+
           <button onClick={handleWhatsApp} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#25D366] text-white hover:bg-[#1DA851] transition-all font-black text-sm shadow-[0_0_20px_rgba(37,211,102,0.3)]">
             <MessageCircle className="w-4 h-4 mr-2" /> 
-            {customer?.customer_phone ? 'Send to Customer' : 'Share'}
+            {customer?.customer_phone ? 'Send' : 'Share'}
           </button>
           <button onClick={handleDownloadImage} disabled={downloading} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0D1117] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm disabled:opacity-50">
             <Download className="w-4 h-4 mr-2 text-[#60A5FA]" /> {downloading ? 'Saving...' : 'Image'}
           </button>
           <button onClick={handlePrint} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0D1117] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm">
-            <Printer className="w-4 h-4 mr-2 text-[#F4C542]" /> Print / PDF
+            <Printer className="w-4 h-4 mr-2 text-[#F4C542]" /> Print
           </button>
         </div>
       </div>
@@ -217,12 +245,17 @@ export default function ReceiptPreview() {
             <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>{docType} No.</p>
             <p className="text-[11px] font-mono font-bold text-slate-800 mt-0.5">{receipt.receipt_number}</p>
           </div>
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Payment Method</p>
-            <p className="text-[11px] font-bold text-slate-800 mt-0.5">{receipt.payment_method || 'N/A'}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Cashier</p>
+          
+          {/* DYNAMIC FIELD: Only show Payment Method if it is NOT a Quotation */}
+          {docType !== 'Quotation' && (
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Payment</p>
+              <p className="text-[11px] font-bold text-slate-800 mt-0.5">{receipt.payment_method || 'N/A'}</p>
+            </div>
+          )}
+
+          <div className={docType === 'Quotation' ? "col-span-2 text-left" : "text-right"}>
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Issued By</p>
             <p className="text-[11px] font-bold text-slate-800 mt-0.5 uppercase">SYSTEM</p>
           </div>
           
@@ -307,7 +340,7 @@ export default function ReceiptPreview() {
           )}
         </div>
 
-        {/* TOTAL & BRAND WATERMARK (With dynamic toggle check) */}
+        {/* TOTAL & BRAND WATERMARK (Premium check applied) */}
         <div style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderTopColor: brandColor, borderBottomColor: brandColor }} className="px-6 py-3 flex justify-between items-center border-y border-dashed relative z-10">
           <div className="flex flex-col">
             <span className="text-xs font-black uppercase tracking-widest text-slate-900">Total</span>
