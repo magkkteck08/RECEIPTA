@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
-import { Printer, ArrowLeft, ShieldCheck, QrCode, Download, MessageCircle } from 'lucide-react'
+import { Printer, ArrowLeft, ShieldCheck, Download, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import html2canvas from 'html2canvas-pro'
 
@@ -22,7 +22,6 @@ export default function ReceiptPreview() {
 
   useEffect(() => {
     async function fetchReceipt() {
-      // 1. Fetch Receipt & Business Data
       const { data: receiptData, error } = await supabase
         .from('receipts')
         .select('*, businesses (*), receipt_items (*)')
@@ -30,13 +29,12 @@ export default function ReceiptPreview() {
         .single()
 
       if (error || !receiptData) {
-        toast.error("Receipt not found")
+        toast.error("Document not found")
         router.push('/dashboard')
         return
       }
       setReceipt(receiptData)
 
-      // 2. Fetch Customer Data (if a customer_id exists)
       if (receiptData.customer_id) {
          const { data: customerData } = await supabase
            .from('customers')
@@ -46,7 +44,6 @@ export default function ReceiptPreview() {
          
          if (customerData) setCustomer(customerData)
       }
-
       setLoading(false)
     }
     fetchReceipt()
@@ -54,30 +51,35 @@ export default function ReceiptPreview() {
 
   const handlePrint = () => window.print()
 
-  // 🚀 THE VIRAL WHATSAPP ENGINE
+  // 📄 DYNAMIC WHATSAPP MESSAGE (Adapts automatically based on Document Type)
   const handleWhatsApp = () => {
     const businessName = receipt?.businesses?.business_name
     const currency = receipt?.businesses?.currency || '₦'
     const amount = `${currency}${Number(receipt?.grand_total).toLocaleString()}`
     const verifyCode = receipt?.verification_code
+    const docType = receipt?.document_type || 'Receipt'
     
-    // We will use the verify portal URL for the link
     const verifyUrl = `${window.location.origin}/verify/${verifyCode}`
     
-    const message = `*Receipt from ${businessName}* 🧾\n\nHello! 👋\nThank you for your purchase of *${amount}*.\n\nYou can view, download, and verify your official digital receipt here:\n🔗 ${verifyUrl}\n\n_Powered by Receipta_`
+    let message = `*${docType} from ${businessName}* 🧾\n\nHello! 👋\n`
+    if (docType === 'Quotation') {
+        message += `Here is the price quotation you requested for *${amount}*.\n\n`
+    } else if (docType === 'Invoice') {
+        message += `Please find the official invoice for *${amount}*.\n\n`
+    } else {
+        message += `Thank you for your purchase of *${amount}*.\n\n`
+    }
     
-    // Check if we have the customer's phone number
+    message += `You can view and verify the official document here:\n🔗 ${verifyUrl}\n\n_Powered by Receipta_`
+    
     let whatsappUrl = ''
     if (customer && customer.customer_phone) {
        let cleanPhone = customer.customer_phone.replace(/\D/g, '')
-       if (cleanPhone.startsWith('0')) {
-          cleanPhone = '234' + cleanPhone.substring(1)
-       }
+       if (cleanPhone.startsWith('0')) cleanPhone = '234' + cleanPhone.substring(1)
        whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
     } else {
        whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`
     }
-
     window.open(whatsappUrl, '_blank')
   }
 
@@ -98,7 +100,8 @@ export default function ReceiptPreview() {
 
       const image = canvas.toDataURL('image/png', 1.0)
       const link = document.createElement('a')
-      link.download = `Receipt_${receipt.receipt_number}.png`
+      const docType = receipt?.document_type || 'Receipt'
+      link.download = `${docType}_${receipt.receipt_number}.png`
       link.href = image
       link.click()
 
@@ -113,9 +116,9 @@ export default function ReceiptPreview() {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-[#FF6B4A] animate-pulse font-bold tracking-widest text-sm flex flex-col items-center">
-        <div className="w-10 h-10 border-4 border-[#FF6B4A] border-t-transparent rounded-full animate-spin mb-4"></div>
-        FETCHING SECURE INVOICE...
+      <div className="text-[#00C896] animate-pulse font-bold tracking-widest text-sm flex flex-col items-center">
+        <div className="w-10 h-10 border-4 border-[#00C896] border-t-transparent rounded-full animate-spin mb-4"></div>
+        FETCHING SECURE DOCUMENT...
       </div>
     </div>
   )
@@ -123,6 +126,7 @@ export default function ReceiptPreview() {
   const business = receipt.businesses
   const items = receipt.receipt_items
   const brandColor = business.brand_primary_color || '#059669' 
+  const docType = receipt.document_type || 'Receipt'
 
   const receiptDate = new Date(receipt.created_at).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
@@ -131,121 +135,140 @@ export default function ReceiptPreview() {
   return (
     <div className="min-h-full pb-20 font-sans print:bg-white print:pb-0">
       
-      {/* 🛑 TOP ACTION BAR */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 print:hidden bg-[#1C1E28] p-4 rounded-2xl border border-[#252733] shadow-lg">
-        <Link href="/dashboard/receipts" className="flex items-center text-[#EEEEF5] hover:text-white transition-colors font-bold text-sm bg-[#15171F] px-4 py-2 rounded-xl border border-[#252733]">
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          .no-print { display: none !important; }
+          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white; }
+          @page { margin: 10mm; } 
+        }
+      `}} />
+
+      {/* ACTION HEADER BAR */}
+      <div className="no-print flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-[#161B22] p-4 rounded-2xl border border-[#21262D] shadow-lg">
+        <Link href="/dashboard/receipts" className="flex items-center text-[#EEEEF5] hover:text-white transition-colors font-bold text-sm bg-[#0D1117] px-4 py-2 rounded-xl border border-[#21262D]">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Link>
         
-        <div className="flex flex-wrap justify-center sm:justify-end gap-3 w-full md:w-auto">
-          {/* ✨ SMART WHATSAPP BUTTON ✨ */}
-          <button onClick={handleWhatsApp} className="flex-1 md:flex-none flex items-center justify-center px-6 py-3 rounded-xl bg-[#25D366] text-white hover:bg-[#1DA851] transition-all font-black text-sm shadow-[0_0_20px_rgba(37,211,102,0.3)]">
-            <MessageCircle className="w-5 h-5 mr-2" /> 
-            {customer?.customer_phone ? 'Send to Customer' : 'Share via WhatsApp'}
+        <div className="flex flex-wrap justify-center sm:justify-end gap-2 w-full md:w-auto">
+          <button onClick={handleWhatsApp} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#25D366] text-white hover:bg-[#1DA851] transition-all font-black text-sm shadow-[0_0_20px_rgba(37,211,102,0.3)]">
+            <MessageCircle className="w-4 h-4 mr-2" /> 
+            {customer?.customer_phone ? 'Send to Customer' : 'Share'}
           </button>
-          
-          <button onClick={handleDownloadImage} disabled={downloading} className="flex-1 md:flex-none flex items-center justify-center px-4 py-3 rounded-xl bg-[#15171F] border border-[#252733] text-[#EEEEF5] hover:bg-[#252733] transition-all font-bold text-sm disabled:opacity-50">
+          <button onClick={handleDownloadImage} disabled={downloading} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0D1117] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm disabled:opacity-50">
             <Download className="w-4 h-4 mr-2 text-[#60A5FA]" /> {downloading ? 'Saving...' : 'Image'}
           </button>
-          
-          <button onClick={handlePrint} className="flex-1 md:flex-none flex items-center justify-center px-4 py-3 rounded-xl bg-[#15171F] border border-[#252733] text-[#EEEEF5] hover:bg-[#252733] transition-all font-bold text-sm">
-            <Printer className="w-4 h-4 mr-2 text-[#F4C542]" /> Print
+          <button onClick={handlePrint} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0D1117] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm">
+            <Printer className="w-4 h-4 mr-2 text-[#F4C542]" /> Print / PDF
           </button>
         </div>
       </div>
 
-      {/* 🧾 THE RECEIPT ITSELF */}
-      <div ref={receiptRef} className="max-w-md mx-auto bg-gradient-to-b from-[#FDFDFD] to-[#F3F4F6] rounded-t-2xl rounded-b-md shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden text-slate-900 relative print:shadow-none print:w-full print:max-w-none">
+      {/* RECEIPT TEMPLATE BODY */}
+      <div ref={receiptRef} className="max-w-[380px] mx-auto bg-gradient-to-b from-[#FDFDFD] to-[#F3F4F6] rounded-t-xl rounded-b-md shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden text-slate-900 relative print:shadow-none print:my-0">
         
-        <div style={{ backgroundColor: brandColor }} className="h-4 w-full relative z-20"></div>
+        <div style={{ backgroundColor: brandColor }} className="h-3 w-full relative z-20"></div>
 
-        {/* 💧 WATERMARK LOGO */}
+        {/* 📄 DYNAMIC BACKGROUND WATERMARK STAMP */}
+        <div className="absolute top-40 left-1/2 -translate-x-1/2 -rotate-12 pointer-events-none z-0 opacity-[0.08]">
+             <span className="text-6xl font-black border-8 px-4 py-2 uppercase" style={{ color: brandColor, borderColor: brandColor }}>
+                {docType}
+             </span>
+        </div>
+
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] z-0">
           {business.logo_url ? (
-             <img src={business.logo_url} className="w-80 h-80 object-cover rounded-full grayscale mix-blend-multiply" crossOrigin="anonymous" alt="" />
+             <img src={business.logo_url} className="w-64 h-64 object-cover rounded-full grayscale mix-blend-multiply" crossOrigin="anonymous" alt="" />
           ) : (
-             <ShieldCheck className="w-80 h-80 text-slate-900" />
+             <ShieldCheck className="w-64 h-64 text-slate-900" />
           )}
         </div>
 
-        <div className="px-8 pt-10 pb-6 text-center relative z-10">
+        {/* VENDOR HEADER SECTION */}
+        <div className="px-6 pt-6 pb-3 text-center relative z-10">
           {business.logo_url ? (
-            <img src={business.logo_url} alt="Logo" className="h-20 w-20 object-cover mx-auto mb-4 rounded-full border-2 border-slate-200 shadow-sm bg-white" crossOrigin="anonymous" />
+            <img src={business.logo_url} alt="Logo" className="h-14 w-14 object-cover mx-auto mb-3 rounded-full border border-slate-200 shadow-sm bg-white" crossOrigin="anonymous" />
           ) : (
-            <div style={{ backgroundColor: `${brandColor}15`, color: brandColor }} className="h-20 w-20 rounded-full mx-auto mb-4 flex items-center justify-center font-black text-3xl border-2 border-slate-200 shadow-sm">
+            <div style={{ backgroundColor: `${brandColor}15`, color: brandColor }} className="h-14 w-14 rounded-full mx-auto mb-3 flex items-center justify-center font-black text-2xl border border-slate-200 shadow-sm">
               {business.business_name.charAt(0)}
             </div>
           )}
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 uppercase">{business.business_name}</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">{business.street_address}</p>
-          <p className="text-sm text-slate-500 font-medium">{business.city} {business.state_region && `, ${business.state_region}`}</p>
-          <p className="text-sm text-slate-500 mt-2 font-medium">{business.business_phone}</p>
-          {business.business_email && <p className="text-sm text-slate-500 font-medium">{business.business_email}</p>}
-          {business.cac_reg_no && <p className="text-[10px] text-slate-400 mt-2 uppercase tracking-widest font-bold border border-slate-300 bg-white/50 inline-block px-3 py-1.5 rounded-full">CAC: {business.cac_reg_no}</p>}
+          <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase leading-tight">{business.business_name}</h1>
+          <p className="text-[11px] text-slate-500 mt-1 font-medium leading-tight">{business.street_address}</p>
+          <p className="text-[11px] text-slate-500 font-medium leading-tight">{business.city} {business.state_region && `, ${business.state_region}`}</p>
+          <p className="text-[11px] text-slate-500 mt-1 font-medium">{business.business_phone}</p>
+          
+          {/* 📄 DYNAMIC HEADER BADGE */}
+          <div className="mt-3">
+             <span className="text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1 rounded-full border bg-white shadow-sm" style={{ color: brandColor, borderColor: `${brandColor}40` }}>
+                {docType}
+             </span>
+          </div>
         </div>
 
-        <div className="w-full border-t-2 border-dashed border-slate-300 my-2 relative z-10"></div>
+        <div className="w-full border-t border-dashed border-slate-300 my-1 relative z-10"></div>
 
-        {/* 🎨 BRAND COLORED DETAILS SECTION */}
-        <div className="px-8 py-4 grid grid-cols-2 gap-y-4 relative z-10">
+        {/* DOCUMENT METADATA */}
+        <div className="px-6 py-3 grid grid-cols-2 gap-y-2 relative z-10">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Date</p>
-            <p className="text-xs font-bold text-slate-800 mt-0.5">{receiptDate}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Date</p>
+            <p className="text-[11px] font-bold text-slate-800 mt-0.5">{receiptDate}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Receipt No.</p>
-            <p className="text-sm font-mono font-bold text-slate-800 mt-0.5">{receipt.receipt_number}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>{docType} No.</p>
+            <p className="text-[11px] font-mono font-bold text-slate-800 mt-0.5">{receipt.receipt_number}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Payment</p>
-            <p className="text-xs font-bold text-slate-800 mt-0.5">{receipt.payment_method}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Payment Method</p>
+            <p className="text-[11px] font-bold text-slate-800 mt-0.5">{receipt.payment_method || 'N/A'}</p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Cashier</p>
-            <p className="text-xs font-bold text-slate-800 mt-0.5 uppercase">SYSTEM</p>
+            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Cashier</p>
+            <p className="text-[11px] font-bold text-slate-800 mt-0.5 uppercase">SYSTEM</p>
           </div>
           
-          {/* Customer Info (If exists) */}
           {customer && (
-             <>
-               <div className="col-span-2 pt-2 border-t border-slate-200/50 mt-2">
-                 <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Billed To</p>
-                 <p className="text-sm font-bold text-slate-800 mt-0.5">{customer.customer_name}</p>
-                 <p className="text-xs font-medium text-slate-500">{customer.customer_phone}</p>
-               </div>
-             </>
+             <div className="col-span-2 pt-2 border-t border-slate-200/50 mt-1">
+               <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Billed To</p>
+               <p className="text-xs font-bold text-slate-800 mt-0.5 leading-tight">{customer.customer_name}</p>
+               <p className="text-[10px] font-medium text-slate-500">{customer.customer_phone}</p>
+             </div>
           )}
         </div>
 
-        <div className="w-full border-t-2 border-dashed border-slate-300 my-2 relative z-10"></div>
+        <div className="w-full border-t border-dashed border-slate-300 my-1 relative z-10"></div>
 
-        <div className="px-8 py-4 relative z-10">
+        {/* ITEMS TABLE */}
+        <div className="px-6 py-2 relative z-10">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b-2 border-slate-900">
-                <th className="pb-2 text-[10px] font-black uppercase tracking-widest text-slate-900">Qty</th>
-                <th className="pb-2 text-[10px] font-black uppercase tracking-widest text-slate-900">Item</th>
-                <th className="pb-2 text-[10px] font-black uppercase tracking-widest text-slate-900 text-right">Amount</th>
+              <tr className="border-b border-slate-900">
+                <th className="pb-1 text-[9px] font-black uppercase tracking-widest text-slate-900">Qty</th>
+                <th className="pb-1 text-[9px] font-black uppercase tracking-widest text-slate-900">Item</th>
+                <th className="pb-1 text-[9px] font-black uppercase tracking-widest text-slate-900 text-right">Amount</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/60">
               {items.map((item: any) => (
                 <tr key={item.id}>
-                  <td className="py-4 text-sm font-bold text-slate-600 align-top w-12">{item.quantity}</td>
-                  <td className="py-4 pr-4">
-                    <p className="text-sm font-bold text-slate-900 leading-tight">{item.item_name}</p>
-                    
+                  <td className="py-2 text-xs font-bold text-slate-600 align-top w-8">{item.quantity}</td>
+                  <td className="py-2 pr-2">
+                    <p className="text-xs font-bold text-slate-900 leading-tight">{item.item_name}</p>
+                    {Number(item.quantity) > 1 && (
+                      <p className="text-[9px] font-bold text-slate-500 mt-0.5">
+                        {item.quantity} x {Number(Number(item.total_price) / Number(item.quantity)).toLocaleString()}
+                      </p>
+                    )}
                     {item.serial_number && (
-                      <div className="text-[9px] font-bold text-slate-500 tracking-wider mt-2 space-y-0.5">
+                      <div className="text-[8px] font-bold text-slate-500 tracking-wider mt-1 space-y-0.5">
                         {item.serial_number.split('\n').map((line: string, i: number) => (
                           <div key={i}>{line}</div>
                         ))}
                       </div>
                     )}
                   </td>
-                  <td className="py-4 text-sm font-mono font-bold text-slate-900 text-right align-top">
+                  <td className="py-2 text-xs font-mono font-bold text-slate-900 text-right align-top">
                     {Number(item.total_price) === 0 ? (
-                      <span className="text-[10px] uppercase tracking-widest font-black text-[#059669] bg-[#059669]/10 px-2 py-1 rounded-md">FREE</span>
+                      <span className="text-[9px] uppercase tracking-widest font-black text-[#059669] bg-[#059669]/10 px-1.5 py-0.5 rounded-sm">FREE</span>
                     ) : (
                       Number(item.total_price).toLocaleString()
                     )}
@@ -256,85 +279,84 @@ export default function ReceiptPreview() {
           </table>
         </div>
 
-        <div className="w-full border-t-2 border-dashed border-slate-300 my-2 relative z-10"></div>
+        <div className="w-full border-t border-dashed border-slate-300 my-1 relative z-10"></div>
 
-        <div className="px-8 py-4 space-y-2 relative z-10">
-          <div className="flex justify-between text-sm font-bold text-slate-500">
+        {/* PRICING FINANCIALS */}
+        <div className="px-6 py-2 space-y-1 relative z-10">
+          <div className="flex justify-between text-xs font-bold text-slate-500">
             <span>Subtotal</span>
             <span className="font-mono">{Number(receipt.subtotal).toLocaleString()}</span>
           </div>
           {receipt.tax_amount > 0 && (
-            <div className="flex justify-between text-sm font-bold text-slate-500">
+            <div className="flex justify-between text-xs font-bold text-slate-500">
               <span>Tax ({receipt.tax_percentage}%)</span>
               <span className="font-mono">{Number(receipt.tax_amount).toLocaleString()}</span>
             </div>
           )}
           {receipt.discount_amount > 0 && (
-            <div className="flex justify-between text-sm font-bold text-slate-500">
+            <div className="flex justify-between text-xs font-bold text-slate-500">
               <span>Discount ({receipt.discount_percentage}%)</span>
               <span className="font-mono">-{Number(receipt.discount_amount).toLocaleString()}</span>
             </div>
           )}
           {receipt.shipping_fee > 0 && (
-            <div className="flex justify-between text-sm font-bold text-slate-500">
+            <div className="flex justify-between text-xs font-bold text-slate-500">
               <span>Shipping</span>
               <span className="font-mono">{Number(receipt.shipping_fee).toLocaleString()}</span>
             </div>
           )}
         </div>
 
-        <div style={{ backgroundColor: `${brandColor}15`, color: brandColor, borderTopColor: brandColor, borderBottomColor: brandColor }} className="px-8 py-5 flex justify-between items-center border-y-2 border-dashed relative z-10 bg-white/50 backdrop-blur-sm">
-          <span className="text-sm font-black uppercase tracking-widest text-slate-900">Total</span>
+        {/* TOTAL & BRAND WATERMARK (With dynamic toggle check) */}
+        <div style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderTopColor: brandColor, borderBottomColor: brandColor }} className="px-6 py-3 flex justify-between items-center border-y border-dashed relative z-10">
+          <div className="flex flex-col">
+            <span className="text-xs font-black uppercase tracking-widest text-slate-900">Total</span>
+            
+            {/* 🔒 THE PREMIUM WATERMARK CHECK */}
+            {!business?.hide_watermark && (
+              <div className="flex flex-col gap-0.5 mt-1 opacity-80">
+                <div className="flex items-center gap-1">
+                  <ShieldCheck className="w-2.5 h-2.5" />
+                  <span className="text-[6px] font-black uppercase tracking-widest">Powered by Receipta</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-1 h-1 rounded-full bg-current"></div>
+                  <span className="text-[6px] font-bold uppercase tracking-[0.05em]">Architected by MAGKK.TECK</span>
+                </div>
+              </div>
+            )}
+
+          </div>
           <div className="text-right">
-             <span className="text-sm font-bold mr-1">{business.currency || '₦'}</span>
-             <span className="text-3xl font-black font-mono tracking-tighter text-slate-900">{Number(receipt.grand_total).toLocaleString()}</span>
+             <span className="text-xs font-bold mr-1">{business.currency || '₦'}</span>
+             <span className="text-2xl font-black font-mono tracking-tighter text-slate-900">{Number(receipt.grand_total).toLocaleString()}</span>
           </div>
         </div>
 
-        {/* 🔄 REORDERED FOOTER SECTION */}
-        <div className="px-8 py-8 flex flex-col items-center text-center relative z-10">
-          
-          {/* 1. Signature */}
+        {/* FOOTER & VERIFICATION BLOCK */}
+        <div className="px-6 pt-3 pb-4 flex flex-col items-center text-center relative z-10">
           {business.signature_url && (
-            <div className="mb-6 flex flex-col items-center bg-white/50 p-3 rounded-2xl border border-slate-200 shadow-sm">
-              <img src={business.signature_url} alt="Signature" className="h-16 object-contain mb-1 mix-blend-multiply" crossOrigin="anonymous" />
-              <div className="w-40 border-t-2 border-slate-300 pt-1.5 text-[9px] text-slate-500 uppercase font-black tracking-widest">Authorized Sign</div>
+            <div className="mb-2 flex flex-col items-center bg-white/50 p-2 rounded-xl border border-slate-200 shadow-sm">
+              <img src={business.signature_url} alt="Signature" className="h-8 object-contain mb-0.5 mix-blend-multiply" crossOrigin="anonymous" />
+              <div className="w-32 border-t border-slate-300 pt-1 text-[7px] text-slate-500 uppercase font-black tracking-widest">Authorized Sign</div>
             </div>
           )}
-
-          {/* 2. Main Footer Message */}
-          <p className="text-lg font-black text-slate-900 mb-6">{business.footer_message || 'Thank you for your business!'}</p>
-
-          {/* 3. Warranty & Return Policy (Moved UP) */}
+          <p className="text-xs font-black text-slate-900 mb-2">{business.footer_message || 'Thank you for your business!'}</p>
           {(business.warranty_policy || business.return_policy) && (
-            <div className="w-full text-left bg-white/60 p-5 rounded-xl border border-slate-200 space-y-3 shadow-sm mb-6">
+            <div className="w-full text-left bg-white/60 p-2.5 rounded-lg border border-slate-200 space-y-1 shadow-sm mb-2">
               {business.warranty_policy && (
-                <p className="text-[9px] text-slate-500 font-bold leading-relaxed uppercase"><span className="text-slate-900">Warranty:</span> {business.warranty_policy}</p>
+                <p className="text-[7px] text-slate-500 font-bold leading-tight uppercase"><span className="text-slate-900">Warranty:</span> {business.warranty_policy}</p>
               )}
               {business.return_policy && (
-                <p className="text-[9px] text-slate-500 font-bold leading-relaxed uppercase"><span className="text-slate-900">Returns:</span> {business.return_policy}</p>
+                <p className="text-[7px] text-slate-500 font-bold leading-tight uppercase"><span className="text-slate-900">Returns:</span> {business.return_policy}</p>
               )}
             </div>
           )}
-
-          {/* 4. Verification Code Display */}
-          <div className="flex items-center gap-1.5 justify-center mb-5 bg-white/60 px-4 py-2 rounded-full border border-slate-200 shadow-sm">
-            <ShieldCheck className="w-4 h-4" style={{ color: brandColor }} />
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Verify: {receipt.verification_code}</span>
+          <div className="flex items-center gap-1.5 justify-center mb-1.5 bg-white/60 px-3 py-1 rounded-full border border-slate-200 shadow-sm">
+            <ShieldCheck className="w-3 h-3" style={{ color: brandColor }} />
+            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Verify: {receipt.verification_code}</span>
           </div>
-
-          {/* 5. QR Code (Moved DOWN to the bottom) */}
-          {business.show_qr && (
-            <div className="mt-2 p-2 bg-white border-2 border-dashed rounded-2xl inline-block shadow-sm" style={{ borderColor: `${brandColor}50` }}>
-              <div className="w-24 h-24 flex items-center justify-center bg-slate-50 rounded-xl">
-                <QrCode className="w-16 h-16" style={{ color: brandColor }} />
-              </div>
-              <p className="text-[8px] font-bold text-slate-500 uppercase mt-2">Scan to Verify</p>
-            </div>
-          )}
-
         </div>
-        
       </div>
     </div>
   )
