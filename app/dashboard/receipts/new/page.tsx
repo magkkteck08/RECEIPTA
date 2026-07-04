@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
-import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp } from 'lucide-react'
+import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText } from 'lucide-react'
 
 // Shadcn Overrides
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +20,9 @@ export default function CreateReceiptPage() {
   const [saving, setSaving] = useState(false)
   const [business, setBusiness] = useState<any>(null)
 
+  // 🚀 NEW: Document Type State
+  const [documentType, setDocumentType] = useState('Receipt')
+  
   // Form State
   const [customer, setCustomer] = useState({ name: '', phone: '', email: '' })
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer')
@@ -110,13 +113,20 @@ export default function CreateReceiptPage() {
 
       const receiptNumber = `${business.receipt_prefix}-${business.receipt_start_number + Math.floor(Math.random() * 1000)}`
       const verificationCode = `VRF-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+      
+      // 🚀 NEW: Determine if it's paid based on document type
+      const isPaid = documentType === 'Receipt' ? grandTotal : 0
 
       // Insert Receipt Master Record
       const { data: receipt, error: receiptError } = await supabase.from('receipts').insert({
         business_id: business.id,
         receipt_number: receiptNumber,
         verification_code: verificationCode,
-        payment_method: paymentMethod,
+        document_type: documentType, // 🚀 NEW
+        payment_method: documentType === 'Quotation' ? null : paymentMethod, // 🚀 NEW
+        customer_name: customer.name, // 🚀 NEW
+        customer_phone: customer.phone, // 🚀 NEW
+        customer_email: customer.email, // 🚀 NEW
         subtotal: subtotal,
         tax_percentage: taxRate,
         tax_amount: taxAmount,
@@ -124,7 +134,7 @@ export default function CreateReceiptPage() {
         discount_amount: discountAmount,
         shipping_fee: Number(shipping) || 0,
         grand_total: grandTotal,
-        amount_paid: grandTotal, 
+        amount_paid: isPaid, // 🚀 NEW
         warranty_days: business.default_warranty_days || 0,
       }).select().single()
 
@@ -169,7 +179,7 @@ export default function CreateReceiptPage() {
       const { error: itemsError } = await supabase.from('receipt_items').insert(lineItems)
       if (itemsError) throw itemsError
 
-      toast.success('Receipt Generated Successfully! 🎉', { 
+      toast.success(`${documentType} Generated Successfully! 🎉`, { 
         style: { background: '#1C1E28', color: '#FF6B4A', border: '1px solid #252733' } 
       })
       
@@ -202,10 +212,28 @@ export default function CreateReceiptPage() {
 
       <form onSubmit={handleGenerateReceipt} className="relative z-10 p-4 md:p-8">
         
-        {/* Header */}
-        <div className="border-b border-[#252733] pb-6 mb-8">
-          <h1 className="text-3xl font-black text-white tracking-tight">Create Receipt</h1>
-          <p className="text-[#737490] mt-1 text-sm">Fill in the transaction details to generate a secure invoice.</p>
+        {/* 🚀 NEW: Dynamic Header with Toggle */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-[#252733] pb-6 mb-8 gap-6">
+          <div>
+            <h1 className="text-3xl font-black text-white tracking-tight">Create {documentType}</h1>
+            <p className="text-[#737490] mt-1 text-sm">Fill in the transaction details to generate a secure {documentType.toLowerCase()}.</p>
+          </div>
+
+          <div className="flex bg-[#1C1E28] p-1.5 rounded-xl border border-[#252733] shadow-inner">
+            {['Receipt', 'Invoice', 'Quotation'].map(type => (
+              <button
+                key={type} type="button" onClick={() => setDocumentType(type)}
+                className={`px-5 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center ${
+                  documentType === type 
+                  ? 'bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] shadow-lg scale-100' 
+                  : 'text-[#737490] hover:text-white hover:bg-[#252733] scale-95'
+                }`}
+              >
+                <FileText className={`w-4 h-4 mr-2 ${documentType === type ? 'text-[#0F1117]' : 'text-[#737490]'}`} />
+                {type}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -262,7 +290,7 @@ export default function CreateReceiptPage() {
                   <div className="p-2 bg-[#F4C542]/10 rounded-lg mr-3">
                     <Receipt className="w-5 h-5 text-[#F4C542]" />
                   </div>
-                  Purchased Items
+                  {documentType === 'Quotation' ? 'Items to Quote' : documentType === 'Invoice' ? 'Invoice Items' : 'Purchased Items'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
@@ -430,18 +458,25 @@ export default function CreateReceiptPage() {
 
             {/* Payment & Shipping Card */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-               <div className="space-y-2">
-                  <Label className={labelTheme}>Payment Method</Label>
-                  <select 
-                    className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} 
-                    value={paymentMethod} 
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  >
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Cash">Cash</option>
-                    <option value="POS / Card">POS / Card</option>
-                  </select>
-                </div>
+               {/* 🚀 NEW: Hide Payment Method for Quotations */}
+               {documentType !== 'Quotation' ? (
+                 <div className="space-y-2">
+                    <Label className={labelTheme}>Payment Method</Label>
+                    <select 
+                      className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} 
+                      value={paymentMethod} 
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    >
+                      <option value="Bank Transfer">Bank Transfer</option>
+                      <option value="Cash">Cash</option>
+                      <option value="POS / Card">POS / Card</option>
+                    </select>
+                  </div>
+               ) : (
+                 <div className="space-y-2 flex flex-col justify-center bg-[#15171F] border border-[#252733] rounded-md px-4 opacity-50 h-[68px]">
+                    <span className="text-[#737490] text-xs font-bold uppercase">Payment N/A for Quotation</span>
+                 </div>
+               )}
                 <div className="space-y-2">
                   <Label className={labelTheme}>Shipping / Delivery Fee</Label>
                   <Input 
@@ -495,13 +530,14 @@ export default function CreateReceiptPage() {
                     <span className="text-3xl font-black text-[#FF6B4A]">{business?.currency || '₦'}{grandTotal.toLocaleString()}</span>
                   </div>
                   
+                  {/* 🚀 NEW: Dynamic Button Text */}
                   <Button 
                     type="submit" 
                     disabled={saving} 
-                    className="w-full h-14 mt-6 bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] hover:from-[#E05535] hover:to-[#10B981] font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(110,231,183,0.2)] hover:shadow-[0_0_30px_rgba(110,231,183,0.4)] transition-all"
+                    className="w-full h-14 mt-6 bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] hover:from-[#E05535] hover:to-[#10B981] font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(110,231,183,0.2)] hover:shadow-[0_0_30px_rgba(110,231,183,0.4)] transition-all uppercase"
                   >
                     <Save className="w-5 h-5 mr-2" /> 
-                    {saving ? 'GENERATING...' : 'ISSUE RECEIPT'}
+                    {saving ? 'GENERATING...' : `ISSUE ${documentType}`}
                   </Button>
                   
                   <p className="text-center text-[10px] text-[#737490] uppercase tracking-widest mt-4">
