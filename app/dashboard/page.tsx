@@ -15,18 +15,31 @@ export default async function DashboardHome() {
     .single()
 
   // 2. Fetch ALL Receipts for this specific business
-  // 🚀 ADDED: amount_paid and document_type to the query
   const { data: receipts } = await supabase
     .from('receipts')
     .select('id, receipt_number, grand_total, amount_paid, document_type, created_at, payment_method, customer_id')
     .eq('business_id', business?.id)
     .order('created_at', { ascending: false }) // Newest first
 
-  // 3. The Math Engine (Calculates live data!)
+  // 3. 🚀 NEW: Fetch ALL Expenses for this specific business
+  // NOTE: Ensure 'expenses' matches the actual table name you used in your spend file
+  const { data: expenses } = await supabase
+    .from('expenses')
+    .select('amount')
+    .eq('business_id', business?.id)
+
+  // 4. The Math Engine (Calculates live data!)
   const safeReceipts = receipts || []
+  const safeExpenses = expenses || []
   
-  // 🐛 BUG FIX: Sum only the amount_paid! Unpaid Invoices/Quotes will add 0 to this total.
+  // Sum only the amount_paid! Unpaid Invoices/Quotes will add 0 to this total.
   const totalRevenue = safeReceipts.reduce((sum, r) => sum + Number(r.amount_paid || 0), 0)
+  
+  // 🚀 NEW: Calculate total expenses
+  const totalExpenses = safeExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0)
+
+  // 🚀 NEW: Calculate True Net Balance
+  const netBalance = totalRevenue - totalExpenses
   
   // Count total documents generated
   const receiptsIssued = safeReceipts.length
@@ -65,16 +78,21 @@ export default async function DashboardHome() {
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        {/* Total Revenue */}
+        {/* 🚀 UPGRADED: True Net Balance Card */}
         <Card className="bg-[#1C1E28] border-[#252733] shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-24 h-24 bg-[#00C896] opacity-5 rounded-full blur-2xl group-hover:opacity-10 transition-opacity"></div>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-bold text-[#EEEEF5] uppercase tracking-wider">Total Revenue</CardTitle>
+            <CardTitle className="text-xs font-bold text-[#EEEEF5] uppercase tracking-wider">Net Balance</CardTitle>
             <div className="p-2 bg-[#00C896]/10 rounded-lg"><Wallet className="h-4 w-4 text-[#00C896]" /></div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-white">{formatCurrency(totalRevenue)}</div>
-            <p className="text-xs text-[#00C896] mt-1 flex items-center font-medium">Lifetime earnings</p>
+            <div className="text-2xl font-black text-white">{formatCurrency(netBalance)}</div>
+            
+            {/* Split Breakdown */}
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-[#252733]/50 text-[10px] uppercase font-bold tracking-wider">
+              <span className="text-[#00C896]">In: {formatCurrency(totalRevenue)}</span>
+              <span className="text-[#FB7185]">Out: {formatCurrency(totalExpenses)}</span>
+            </div>
           </CardContent>
         </Card>
 
@@ -161,7 +179,6 @@ export default async function DashboardHome() {
                         {new Date(receipt.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
                       <td className="py-4 px-6">
-                        {/* 🚀 ADDED: Dynamic Badge for Document Type */}
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                           receipt.document_type === 'Quotation' ? 'bg-[#F4C542]/20 text-[#F4C542]' :
                           receipt.document_type === 'Invoice' ? 'bg-[#60A5FA]/20 text-[#60A5FA]' :
@@ -171,7 +188,6 @@ export default async function DashboardHome() {
                         </span>
                       </td>
                       <td className="py-4 px-6 text-sm font-black text-right">
-                        {/* If it is unpaid, make the text grey instead of green */}
                         <span className={receipt.amount_paid > 0 ? "text-[#00C896]" : "text-[#737490]"}>
                           {formatCurrency(Number(receipt.grand_total))}
                         </span>
