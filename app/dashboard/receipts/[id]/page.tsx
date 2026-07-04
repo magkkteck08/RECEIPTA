@@ -35,6 +35,7 @@ export default function ReceiptPreview() {
       }
       setReceipt(receiptData)
 
+      // Resolve Customer Details from standalone customer relation or fallback to direct receipt fields
       if (receiptData.customer_id) {
          const { data: customerData } = await supabase
            .from('customers')
@@ -42,7 +43,21 @@ export default function ReceiptPreview() {
            .eq('id', receiptData.customer_id)
            .single()
          
-         if (customerData) setCustomer(customerData)
+         if (customerData) {
+           setCustomer(customerData)
+         } else {
+           setCustomer({
+             customer_name: receiptData.customer_name,
+             customer_phone: receiptData.customer_phone,
+             customer_email: receiptData.customer_email
+           })
+         }
+      } else if (receiptData.customer_name || receiptData.customer_phone || receiptData.customer_email) {
+         setCustomer({
+           customer_name: receiptData.customer_name,
+           customer_phone: receiptData.customer_phone,
+           customer_email: receiptData.customer_email
+         })
       }
       setLoading(false)
     }
@@ -89,8 +104,9 @@ export default function ReceiptPreview() {
     message += `You can view and verify the official document here:\n🔗 ${verifyUrl}\n\n_Powered by Receipta_`
     
     let whatsappUrl = ''
-    if (customer && customer.customer_phone) {
-       let cleanPhone = customer.customer_phone.replace(/\D/g, '')
+    const phoneNum = customer?.customer_phone || customer?.phone
+    if (phoneNum) {
+       let cleanPhone = phoneNum.replace(/\D/g, '')
        if (cleanPhone.startsWith('0')) cleanPhone = '234' + cleanPhone.substring(1)
        whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
     } else {
@@ -148,6 +164,9 @@ export default function ReceiptPreview() {
     year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
   })
 
+  // Dynamic names tracking across object structures
+  const resolvedCustomerName = customer?.customer_name || customer?.name
+
   return (
     <div className="min-h-full pb-20 font-sans print:bg-white print:pb-0">
       
@@ -180,7 +199,7 @@ export default function ReceiptPreview() {
 
           <button onClick={handleWhatsApp} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#25D366] text-white hover:bg-[#1DA851] transition-all font-black text-sm shadow-[0_0_20px_rgba(37,211,102,0.3)]">
             <MessageCircle className="w-4 h-4 mr-2" /> 
-            {customer?.customer_phone ? 'Send' : 'Share'}
+            {(customer?.customer_phone || customer?.phone) ? 'Send' : 'Share'}
           </button>
           <button onClick={handleDownloadImage} disabled={downloading} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0D1117] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm disabled:opacity-50">
             <Download className="w-4 h-4 mr-2 text-[#60A5FA]" /> {downloading ? 'Saving...' : 'Image'}
@@ -217,7 +236,7 @@ export default function ReceiptPreview() {
             <img src={business.logo_url} alt="Logo" className="h-14 w-14 object-cover mx-auto mb-3 rounded-full border border-slate-200 shadow-sm bg-white" crossOrigin="anonymous" />
           ) : (
             <div style={{ backgroundColor: `${brandColor}15`, color: brandColor }} className="h-14 w-14 rounded-full mx-auto mb-3 flex items-center justify-center font-black text-2xl border border-slate-200 shadow-sm">
-              {business.business_name.charAt(0)}
+              {business.business_name?.charAt(0) || 'V'}
             </div>
           )}
           <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase leading-tight">{business.business_name}</h1>
@@ -259,11 +278,13 @@ export default function ReceiptPreview() {
             <p className="text-[11px] font-bold text-slate-800 mt-0.5 uppercase">SYSTEM</p>
           </div>
           
-          {customer && (
+          {resolvedCustomerName && (
              <div className="col-span-2 pt-2 border-t border-slate-200/50 mt-1">
                <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Billed To</p>
-               <p className="text-xs font-bold text-slate-800 mt-0.5 leading-tight">{customer.customer_name}</p>
-               <p className="text-[10px] font-medium text-slate-500">{customer.customer_phone}</p>
+               <p className="text-xs font-bold text-slate-800 mt-0.5 leading-tight">{resolvedCustomerName}</p>
+               {(customer.customer_phone || customer.phone) && (
+                 <p className="text-[10px] font-medium text-slate-500">{customer.customer_phone || customer.phone}</p>
+               )}
              </div>
           )}
         </div>
@@ -281,7 +302,7 @@ export default function ReceiptPreview() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200/60">
-              {items.map((item: any) => (
+              {items?.map((item: any) => (
                 <tr key={item.id}>
                   <td className="py-2 text-xs font-bold text-slate-600 align-top w-8">{item.quantity}</td>
                   <td className="py-2 pr-2">
@@ -394,3 +415,4 @@ export default function ReceiptPreview() {
     </div>
   )
 }
+
