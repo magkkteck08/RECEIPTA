@@ -125,6 +125,12 @@ export default function CreateReceiptPage() {
         verification_code: verificationCode,
         document_type: documentType, // 'Receipt', 'Invoice', or 'Quotation'
         payment_method: documentType === 'Quotation' ? null : paymentMethod,
+        
+        // 👈 KEY FIX: Added the customer details into the payload
+        customer_name: customer.name || null,
+        customer_phone: customer.phone || null,
+        customer_email: customer.email || null,
+
         subtotal: subtotal,
         tax_percentage: taxRate,
         tax_amount: taxAmount,
@@ -132,7 +138,7 @@ export default function CreateReceiptPage() {
         discount_amount: discountAmount,
         shipping_fee: Number(shipping) || 0,
         grand_total: grandTotal,
-        amount_paid: isPaid, // 👈 KEY FIX: Invoices/Quotes don't add to "Volume" yet
+        amount_paid: isPaid, // Invoices/Quotes don't add to "Volume" yet
         warranty_days: business.default_warranty_days || 0,
       }).select().single()
 
