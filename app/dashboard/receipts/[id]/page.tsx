@@ -437,41 +437,6 @@ export default function ReceiptPreview() {
               </div>
             )}
 
-            {/* NEW 🛡 VERIFIED BUSINESS CARD */}
-            <div className="bg-[#161B22] border border-white/10 rounded-2xl p-5 shadow-[0_10px_30px_rgba(0,0,0,0.5)] w-full relative overflow-hidden print-border print-bg-transparent">
-               
-               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00C896]/60 to-transparent no-print"></div>
-
-               <div className="flex items-center gap-2 mb-5">
-                 <ShieldCheck className="w-5 h-5 text-[#00C896] print-text-gray" />
-                 <h3 className="text-[13px] font-black text-white uppercase tracking-widest print-text-white">Verified Business</h3>
-               </div>
-
-               <div className="space-y-3.5">
-                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5 print-border">
-                   <span className="text-[10px] text-[#8B949E] uppercase font-bold tracking-wider print-text-gray">Business Status</span>
-                   <span className="text-[11px] text-white font-bold print-text-white">Verified by Receipta</span>
-                 </div>
-                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5 print-border">
-                   <span className="text-[10px] text-[#8B949E] uppercase font-bold tracking-wider print-text-gray">Receipt Integrity</span>
-                   <span className="text-[11px] text-[#00C896] font-bold flex items-center gap-1 print-text-gray">
-                     <ShieldCheck className="w-3.5 h-3.5"/> Tamper Protection: Active
-                   </span>
-                 </div>
-                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5 print-border">
-                   <span className="text-[10px] text-[#8B949E] uppercase font-bold tracking-wider print-text-gray">Issued From</span>
-                   <span className="text-[11px] text-white font-bold print-text-white">Registered Business Account</span>
-                 </div>
-                 <div className="flex justify-between items-center border-b border-white/5 pb-2.5 print-border">
-                   <span className="text-[10px] text-[#8B949E] uppercase font-bold tracking-wider print-text-gray">Generated</span>
-                   <span className="text-[11px] text-white font-bold print-text-white">{displayDate} • {displayTime}</span>
-                 </div>
-                 <div className="flex justify-between items-center pt-1">
-                   <span className="text-[10px] text-[#8B949E] uppercase font-bold tracking-wider print-text-gray">Trust Rating</span>
-                   <span className="text-[14px] text-[#F4C542] tracking-widest print-text-gray">★★★★★</span>
-                 </div>
-               </div>
-            </div>
 
             {/* VERIFICATION ID PILL */}
             <div className="mt-8 flex justify-center">
