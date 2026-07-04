@@ -118,17 +118,15 @@ export default function ReceiptPreview() {
   const handleDownloadImage = async () => {
     if (!receiptRef.current) return
     setDownloading(true)
-    const toastId = toast.loading('Generating high-res image...')
+    const toastId = toast.loading('Rendering premium asset...')
 
     try {
-      receiptRef.current.classList.add('print-mode-active')
       const canvas = await html2canvas(receiptRef.current, {
-        scale: 2, 
+        scale: 3, // Ultra-high resolution for that crisp glass look
         useCORS: true, 
-        backgroundColor: '#FFFFFF', 
+        backgroundColor: '#0A0C10', // Dark space background for the bounding box
         logging: false,
       })
-      receiptRef.current.classList.remove('print-mode-active')
 
       const image = canvas.toDataURL('image/png', 1.0)
       const link = document.createElement('a')
@@ -137,7 +135,7 @@ export default function ReceiptPreview() {
       link.href = image
       link.click()
 
-      toast.success('Image saved to your device! 📸', { id: toastId })
+      toast.success('Digital asset saved! 📸', { id: toastId })
     } catch (error) {
       console.error(error)
       toast.error('Failed to generate image.', { id: toastId })
@@ -157,30 +155,41 @@ export default function ReceiptPreview() {
 
   const business = receipt.businesses
   const items = receipt.receipt_items
-  const brandColor = business.brand_primary_color || '#059669' 
+  const brandColor = business.brand_primary_color || '#00C896' 
   const docType = receipt.document_type || 'Receipt'
 
   const receiptDate = new Date(receipt.created_at).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
   })
 
-  // Dynamic names tracking across object structures
   const resolvedCustomerName = customer?.customer_name || customer?.name
 
   return (
-    <div className="min-h-full pb-20 font-sans print:bg-white print:pb-0">
+    <div className="min-h-full pb-20 font-sans print:bg-white print:pb-0 bg-[#0A0C10]">
       
+      {/* 
+        SMART PRINT CSS:
+        This ensures that even though the UI is Dark/Glass, 
+        when the user clicks "Print" for a physical thermal printer, 
+        it forces a white background with black text to save ink.
+      */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           .no-print { display: none !important; }
-          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: white; }
-          @page { margin: 10mm; } 
+          body { background: white !important; }
+          .print-canvas { padding: 0 !important; background: white !important; display: block !important; }
+          .print-card { box-shadow: none !important; border: none !important; background: white !important; max-width: 100% !important; border-radius: 0 !important; }
+          .print-text-white { color: black !important; }
+          .print-text-gray { color: #4b5563 !important; }
+          .print-border { border-color: #e5e7eb !important; }
+          .print-bg-transparent { background: transparent !important; }
+          @page { margin: 5mm; } 
         }
       `}} />
 
       {/* ACTION HEADER BAR */}
-      <div className="no-print flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-[#161B22] p-4 rounded-2xl border border-[#21262D] shadow-lg">
-        <Link href="/dashboard/receipts" className="flex items-center text-[#EEEEF5] hover:text-white transition-colors font-bold text-sm bg-[#0D1117] px-4 py-2 rounded-xl border border-[#21262D]">
+      <div className="max-w-3xl mx-auto no-print flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-[#161B22] p-4 rounded-2xl border border-[#21262D] shadow-lg mt-6">
+        <Link href="/dashboard/receipts" className="flex items-center text-[#EEEEF5] hover:text-white transition-colors font-bold text-sm bg-[#0A0C10] px-4 py-2 rounded-xl border border-[#21262D]">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Link>
         
@@ -190,7 +199,7 @@ export default function ReceiptPreview() {
           <select
             value={docType}
             onChange={(e) => handleTypeChange(e.target.value)}
-            className="bg-[#0D1117] border border-[#21262D] text-[#00C896] rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-wider outline-none focus:border-[#00C896] transition-colors cursor-pointer"
+            className="bg-[#0A0C10] border border-[#21262D] text-[#00C896] rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-wider outline-none focus:border-[#00C896] transition-colors cursor-pointer"
           >
             <option value="Receipt">Receipt</option>
             <option value="Invoice">Invoice</option>
@@ -201,218 +210,231 @@ export default function ReceiptPreview() {
             <MessageCircle className="w-4 h-4 mr-2" /> 
             {(customer?.customer_phone || customer?.phone) ? 'Send' : 'Share'}
           </button>
-          <button onClick={handleDownloadImage} disabled={downloading} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0D1117] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm disabled:opacity-50">
-            <Download className="w-4 h-4 mr-2 text-[#60A5FA]" /> {downloading ? 'Saving...' : 'Image'}
+          <button onClick={handleDownloadImage} disabled={downloading} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0A0C10] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm disabled:opacity-50">
+            <Download className="w-4 h-4 mr-2 text-[#60A5FA]" /> {downloading ? 'Rendering...' : 'Asset'}
           </button>
-          <button onClick={handlePrint} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0D1117] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm">
+          <button onClick={handlePrint} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0A0C10] border border-[#21262D] text-[#EEEEF5] hover:bg-[#21262D] transition-all font-bold text-sm">
             <Printer className="w-4 h-4 mr-2 text-[#F4C542]" /> Print
           </button>
         </div>
       </div>
 
-      {/* RECEIPT TEMPLATE BODY */}
-      <div ref={receiptRef} className="max-w-[380px] mx-auto bg-gradient-to-b from-[#FDFDFD] to-[#F3F4F6] rounded-t-xl rounded-b-md shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden text-slate-900 relative print:shadow-none print:my-0">
+      {/* 📸 THE PRESENTATION CANVAS (Exported via html2canvas) */}
+      <div 
+        ref={receiptRef} 
+        className="print-canvas bg-[#0A0C10] p-8 md:p-16 flex items-center justify-center relative overflow-hidden"
+      >
         
-        <div style={{ backgroundColor: brandColor }} className="h-3 w-full relative z-20"></div>
+        {/* Subtle Ambient Glow for the background */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-[150px] opacity-20 pointer-events-none no-print" style={{ backgroundColor: brandColor }}></div>
 
-        {/* 📄 DYNAMIC BACKGROUND WATERMARK STAMP */}
-        <div className="absolute top-40 left-1/2 -translate-x-1/2 -rotate-12 pointer-events-none z-0 opacity-[0.08]">
-             <span className="text-6xl font-black border-8 px-4 py-2 uppercase" style={{ color: brandColor, borderColor: brandColor }}>
-                {docType}
-             </span>
-        </div>
-
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] z-0">
-          {business.logo_url ? (
-             <img src={business.logo_url} className="w-64 h-64 object-cover rounded-full grayscale mix-blend-multiply" crossOrigin="anonymous" alt="" />
-          ) : (
-             <ShieldCheck className="w-64 h-64 text-slate-900" />
-          )}
-        </div>
-
-        {/* VENDOR HEADER SECTION */}
-        <div className="px-6 pt-6 pb-3 text-center relative z-10">
-          {business.logo_url ? (
-            <img src={business.logo_url} alt="Logo" className="h-14 w-14 object-cover mx-auto mb-3 rounded-full border border-slate-200 shadow-sm bg-white" crossOrigin="anonymous" />
-          ) : (
-            <div style={{ backgroundColor: `${brandColor}15`, color: brandColor }} className="h-14 w-14 rounded-full mx-auto mb-3 flex items-center justify-center font-black text-2xl border border-slate-200 shadow-sm">
-              {business.business_name?.charAt(0) || 'V'}
-            </div>
-          )}
-          <h1 className="text-xl font-black tracking-tight text-slate-900 uppercase leading-tight">{business.business_name}</h1>
-          <p className="text-[11px] text-slate-500 mt-1 font-medium leading-tight">{business.street_address}</p>
-          <p className="text-[11px] text-slate-500 font-medium leading-tight">{business.city} {business.state_region && `, ${business.state_region}`}</p>
-          <p className="text-[11px] text-slate-500 mt-1 font-medium">{business.business_phone}</p>
+        {/* 💳 THE GLASS RECEIPT CARD */}
+        <div className="print-card w-full max-w-[420px] bg-[#161B22] border border-white/10 rounded-3xl shadow-[0_30px_80px_rgba(0,0,0,0.8)] relative z-10 overflow-hidden print-bg-transparent">
           
-          {/* 📄 DYNAMIC HEADER BADGE */}
-          <div className="mt-3">
-             <span className="text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1 rounded-full border bg-white shadow-sm" style={{ color: brandColor, borderColor: `${brandColor}40` }}>
-                {docType}
-             </span>
+          {/* Top Glass Glare Line */}
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent no-print"></div>
+
+          {/* Premium Brand Color Bar */}
+          <div style={{ backgroundColor: brandColor, boxShadow: `0 0 20px ${brandColor}80` }} className="h-1.5 w-full relative z-20 no-print"></div>
+
+          {/* 📄 DYNAMIC BACKGROUND WATERMARK STAMP */}
+          <div className="absolute top-40 left-1/2 -translate-x-1/2 -rotate-12 pointer-events-none z-0 opacity-5">
+               <span className="text-7xl font-black border-8 px-4 py-2 uppercase print-text-gray" style={{ color: brandColor, borderColor: brandColor }}>
+                  {docType}
+               </span>
           </div>
-        </div>
 
-        <div className="w-full border-t border-dashed border-slate-300 my-1 relative z-10"></div>
-
-        {/* DOCUMENT METADATA */}
-        <div className="px-6 py-3 grid grid-cols-2 gap-y-2 relative z-10">
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Date</p>
-            <p className="text-[11px] font-bold text-slate-800 mt-0.5">{receiptDate}</p>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-5 z-0">
+            {business.logo_url ? (
+               <img src={business.logo_url} className="w-64 h-64 object-cover rounded-full grayscale mix-blend-screen" crossOrigin="anonymous" alt="" />
+            ) : (
+               <ShieldCheck className="w-64 h-64 text-white print-text-gray" />
+            )}
           </div>
-          <div className="text-right">
-            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>{docType} No.</p>
-            <p className="text-[11px] font-mono font-bold text-slate-800 mt-0.5">{receipt.receipt_number}</p>
-          </div>
-          
-          {/* DYNAMIC FIELD: Only show Payment Method if it is NOT a Quotation */}
-          {docType !== 'Quotation' && (
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Payment</p>
-              <p className="text-[11px] font-bold text-slate-800 mt-0.5">{receipt.payment_method || 'N/A'}</p>
-            </div>
-          )}
 
-          <div className={docType === 'Quotation' ? "col-span-2 text-left" : "text-right"}>
-            <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Issued By</p>
-            <p className="text-[11px] font-bold text-slate-800 mt-0.5 uppercase">SYSTEM</p>
-          </div>
-          
-          {resolvedCustomerName && (
-             <div className="col-span-2 pt-2 border-t border-slate-200/50 mt-1">
-               <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: brandColor }}>Billed To</p>
-               <p className="text-xs font-bold text-slate-800 mt-0.5 leading-tight">{resolvedCustomerName}</p>
-               {(customer.customer_phone || customer.phone) && (
-                 <p className="text-[10px] font-medium text-slate-500">{customer.customer_phone || customer.phone}</p>
-               )}
-             </div>
-          )}
-        </div>
-
-        <div className="w-full border-t border-dashed border-slate-300 my-1 relative z-10"></div>
-
-        {/* ITEMS TABLE */}
-        <div className="px-6 py-2 relative z-10">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-900">
-                <th className="pb-1 text-[9px] font-black uppercase tracking-widest text-slate-900">Qty</th>
-                <th className="pb-1 text-[9px] font-black uppercase tracking-widest text-slate-900">Item</th>
-                <th className="pb-1 text-[9px] font-black uppercase tracking-widest text-slate-900 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200/60">
-              {items?.map((item: any) => (
-                <tr key={item.id}>
-                  <td className="py-2 text-xs font-bold text-slate-600 align-top w-8">{item.quantity}</td>
-                  <td className="py-2 pr-2">
-                    <p className="text-xs font-bold text-slate-900 leading-tight">{item.item_name}</p>
-                    {Number(item.quantity) > 1 && (
-                      <p className="text-[9px] font-bold text-slate-500 mt-0.5">
-                        {item.quantity} x {Number(Number(item.total_price) / Number(item.quantity)).toLocaleString()}
-                      </p>
-                    )}
-                    {item.serial_number && (
-                      <div className="text-[8px] font-bold text-slate-500 tracking-wider mt-1 space-y-0.5">
-                        {item.serial_number.split('\n').map((line: string, i: number) => (
-                          <div key={i}>{line}</div>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-2 text-xs font-mono font-bold text-slate-900 text-right align-top">
-                    {Number(item.total_price) === 0 ? (
-                      <span className="text-[9px] uppercase tracking-widest font-black text-[#059669] bg-[#059669]/10 px-1.5 py-0.5 rounded-sm">FREE</span>
-                    ) : (
-                      Number(item.total_price).toLocaleString()
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="w-full border-t border-dashed border-slate-300 my-1 relative z-10"></div>
-
-        {/* PRICING FINANCIALS */}
-        <div className="px-6 py-2 space-y-1 relative z-10">
-          <div className="flex justify-between text-xs font-bold text-slate-500">
-            <span>Subtotal</span>
-            <span className="font-mono">{Number(receipt.subtotal).toLocaleString()}</span>
-          </div>
-          {receipt.tax_amount > 0 && (
-            <div className="flex justify-between text-xs font-bold text-slate-500">
-              <span>Tax ({receipt.tax_percentage}%)</span>
-              <span className="font-mono">{Number(receipt.tax_amount).toLocaleString()}</span>
-            </div>
-          )}
-          {receipt.discount_amount > 0 && (
-            <div className="flex justify-between text-xs font-bold text-slate-500">
-              <span>Discount ({receipt.discount_percentage}%)</span>
-              <span className="font-mono">-{Number(receipt.discount_amount).toLocaleString()}</span>
-            </div>
-          )}
-          {receipt.shipping_fee > 0 && (
-            <div className="flex justify-between text-xs font-bold text-slate-500">
-              <span>Shipping</span>
-              <span className="font-mono">{Number(receipt.shipping_fee).toLocaleString()}</span>
-            </div>
-          )}
-        </div>
-
-        {/* TOTAL & BRAND WATERMARK (Premium check applied) */}
-        <div style={{ backgroundColor: `${brandColor}10`, color: brandColor, borderTopColor: brandColor, borderBottomColor: brandColor }} className="px-6 py-3 flex justify-between items-center border-y border-dashed relative z-10">
-          <div className="flex flex-col">
-            <span className="text-xs font-black uppercase tracking-widest text-slate-900">Total</span>
+          {/* VENDOR HEADER SECTION */}
+          <div className="px-8 pt-8 pb-4 text-center relative z-10">
+            {business.logo_url ? (
+              <img src={business.logo_url} alt="Logo" className="h-16 w-16 object-cover mx-auto mb-4 rounded-2xl border border-white/10 shadow-lg bg-[#0A0C10]" crossOrigin="anonymous" />
+            ) : (
+              <div style={{ backgroundColor: `${brandColor}20`, color: brandColor, borderColor: `${brandColor}40` }} className="h-16 w-16 rounded-2xl mx-auto mb-4 flex items-center justify-center font-black text-3xl border shadow-lg">
+                {business.business_name?.charAt(0) || 'V'}
+              </div>
+            )}
+            <h1 className="text-2xl font-black tracking-tight text-white uppercase leading-tight print-text-white">{business.business_name}</h1>
+            <p className="text-[11px] text-[#8B949E] mt-1.5 font-medium leading-tight print-text-gray">{business.street_address}</p>
+            <p className="text-[11px] text-[#8B949E] font-medium leading-tight print-text-gray">{business.city} {business.state_region && `, ${business.state_region}`}</p>
+            <p className="text-[11px] text-[#8B949E] mt-1 font-medium print-text-gray">{business.business_phone}</p>
             
-            {/* 🔒 THE PREMIUM WATERMARK CHECK */}
-            {!business?.hide_watermark && (
-              <div className="flex flex-col gap-0.5 mt-1 opacity-80">
-                <div className="flex items-center gap-1">
-                  <ShieldCheck className="w-2.5 h-2.5" />
-                  <span className="text-[6px] font-black uppercase tracking-widest">Powered by Receipta</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-1 h-1 rounded-full bg-current"></div>
-                  <span className="text-[6px] font-bold uppercase tracking-[0.05em]">Architected by MAGKK.TECK</span>
-                </div>
+            {/* 📄 DYNAMIC HEADER BADGE */}
+            <div className="mt-4">
+               <span className="text-[9px] font-black uppercase tracking-[0.3em] px-4 py-1.5 rounded-full border bg-white/5 backdrop-blur-sm shadow-inner print-bg-transparent print-border" style={{ color: brandColor, borderColor: `${brandColor}40` }}>
+                  {docType}
+               </span>
+            </div>
+          </div>
+
+          <div className="w-full border-t border-dashed border-white/10 my-2 relative z-10 print-border"></div>
+
+          {/* DOCUMENT METADATA */}
+          <div className="px-8 py-4 grid grid-cols-2 gap-y-4 relative z-10">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Date</p>
+              <p className="text-[11px] font-bold text-white mt-1 print-text-white">{receiptDate}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">{docType} No.</p>
+              <p className="text-[11px] font-mono font-bold text-white mt-1 print-text-white">{receipt.receipt_number}</p>
+            </div>
+            
+            {/* DYNAMIC FIELD */}
+            {docType !== 'Quotation' && (
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Payment</p>
+                <p className="text-[11px] font-bold text-white mt-1 print-text-white">{receipt.payment_method || 'N/A'}</p>
               </div>
             )}
 
+            <div className={docType === 'Quotation' ? "col-span-2 text-left" : "text-right"}>
+              <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Issued By</p>
+              <p className="text-[11px] font-bold text-white mt-1 uppercase print-text-white">SYSTEM</p>
+            </div>
+            
+            {resolvedCustomerName && (
+               <div className="col-span-2 pt-3 border-t border-white/5 mt-1 print-border">
+                 <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Billed To</p>
+                 <p className="text-sm font-bold text-white mt-1 leading-tight print-text-white">{resolvedCustomerName}</p>
+                 {(customer.customer_phone || customer.phone) && (
+                   <p className="text-[10px] font-mono font-medium text-[#8B949E] mt-0.5 print-text-gray">{customer.customer_phone || customer.phone}</p>
+                 )}
+               </div>
+            )}
           </div>
-          <div className="text-right">
-             <span className="text-xs font-bold mr-1">{business.currency || '₦'}</span>
-             <span className="text-2xl font-black font-mono tracking-tighter text-slate-900">{Number(receipt.grand_total).toLocaleString()}</span>
-          </div>
-        </div>
 
-        {/* FOOTER & VERIFICATION BLOCK */}
-        <div className="px-6 pt-3 pb-4 flex flex-col items-center text-center relative z-10">
-          {business.signature_url && (
-            <div className="mb-2 flex flex-col items-center bg-white/50 p-2 rounded-xl border border-slate-200 shadow-sm">
-              <img src={business.signature_url} alt="Signature" className="h-8 object-contain mb-0.5 mix-blend-multiply" crossOrigin="anonymous" />
-              <div className="w-32 border-t border-slate-300 pt-1 text-[7px] text-slate-500 uppercase font-black tracking-widest">Authorized Sign</div>
-            </div>
-          )}
-          <p className="text-xs font-black text-slate-900 mb-2">{business.footer_message || 'Thank you for your business!'}</p>
-          {(business.warranty_policy || business.return_policy) && (
-            <div className="w-full text-left bg-white/60 p-2.5 rounded-lg border border-slate-200 space-y-1 shadow-sm mb-2">
-              {business.warranty_policy && (
-                <p className="text-[7px] text-slate-500 font-bold leading-tight uppercase"><span className="text-slate-900">Warranty:</span> {business.warranty_policy}</p>
-              )}
-              {business.return_policy && (
-                <p className="text-[7px] text-slate-500 font-bold leading-tight uppercase"><span className="text-slate-900">Returns:</span> {business.return_policy}</p>
-              )}
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 justify-center mb-1.5 bg-white/60 px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-            <ShieldCheck className="w-3 h-3" style={{ color: brandColor }} />
-            <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">Verify: {receipt.verification_code}</span>
+          <div className="w-full border-t border-dashed border-white/10 my-2 relative z-10 print-border"></div>
+
+          {/* ITEMS TABLE */}
+          <div className="px-8 py-4 relative z-10">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/10 print-border">
+                  <th className="pb-2 text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Qty</th>
+                  <th className="pb-2 text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Item</th>
+                  <th className="pb-2 text-[9px] font-black uppercase tracking-widest text-[#8B949E] text-right print-text-gray">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5 print-border">
+                {items?.map((item: any) => (
+                  <tr key={item.id}>
+                    <td className="py-3 text-xs font-bold text-[#8B949E] align-top w-8 print-text-gray">{item.quantity}</td>
+                    <td className="py-3 pr-2">
+                      <p className="text-xs font-bold text-white leading-tight print-text-white">{item.item_name}</p>
+                      {Number(item.quantity) > 1 && (
+                        <p className="text-[10px] font-bold text-[#8B949E] mt-1 print-text-gray">
+                          {item.quantity} x {Number(Number(item.total_price) / Number(item.quantity)).toLocaleString()}
+                        </p>
+                      )}
+                      {item.serial_number && (
+                        <div className="text-[9px] font-mono text-[#8B949E] tracking-wider mt-1 space-y-0.5 print-text-gray">
+                          {item.serial_number.split('\n').map((line: string, i: number) => (
+                            <div key={i}>{line}</div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 text-xs font-mono font-bold text-white text-right align-top print-text-white">
+                      {Number(item.total_price) === 0 ? (
+                        <span className="text-[9px] uppercase tracking-widest font-black text-[#00C896] bg-[#00C896]/10 px-2 py-1 rounded-md print-bg-transparent">FREE</span>
+                      ) : (
+                        Number(item.total_price).toLocaleString()
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+
+          <div className="w-full border-t border-dashed border-white/10 my-2 relative z-10 print-border"></div>
+
+          {/* PRICING FINANCIALS */}
+          <div className="px-8 py-4 space-y-2 relative z-10">
+            <div className="flex justify-between text-xs font-bold text-[#8B949E] print-text-gray">
+              <span>Subtotal</span>
+              <span className="font-mono text-white print-text-white">{Number(receipt.subtotal).toLocaleString()}</span>
+            </div>
+            {receipt.tax_amount > 0 && (
+              <div className="flex justify-between text-xs font-bold text-[#8B949E] print-text-gray">
+                <span>Tax ({receipt.tax_percentage}%)</span>
+                <span className="font-mono text-white print-text-white">{Number(receipt.tax_amount).toLocaleString()}</span>
+              </div>
+            )}
+            {receipt.discount_amount > 0 && (
+              <div className="flex justify-between text-xs font-bold text-[#00C896]">
+                <span>Discount ({receipt.discount_percentage}%)</span>
+                <span className="font-mono">-{Number(receipt.discount_amount).toLocaleString()}</span>
+              </div>
+            )}
+            {receipt.shipping_fee > 0 && (
+              <div className="flex justify-between text-xs font-bold text-[#8B949E] print-text-gray">
+                <span>Shipping</span>
+                <span className="font-mono text-white print-text-white">{Number(receipt.shipping_fee).toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+
+          {/* TOTAL & BRAND WATERMARK */}
+          <div style={{ backgroundColor: `${brandColor}10`, borderTopColor: brandColor }} className="px-8 py-5 flex justify-between items-center border-t-2 relative z-10 print-bg-transparent print-border">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Total</span>
+              
+              {/* 🔒 THE PREMIUM WATERMARK CHECK */}
+              {!business?.hide_watermark && (
+                <div className="flex flex-col gap-1 mt-2 opacity-60">
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-3 h-3 text-white print-text-gray" />
+                    <span className="text-[7px] font-black uppercase tracking-widest text-white print-text-gray">Powered by Receipta</span>
+                  </div>
+                </div>
+              )}
+
+            </div>
+            <div className="text-right flex items-end">
+               <span className="text-sm font-bold mr-1 text-[#8B949E] print-text-gray mb-1">{business.currency || '₦'}</span>
+               <span className="text-3xl font-black font-mono tracking-tighter text-white print-text-white">{Number(receipt.grand_total).toLocaleString()}</span>
+            </div>
+          </div>
+
+          {/* FOOTER & VERIFICATION BLOCK */}
+          <div className="px-8 pt-6 pb-8 flex flex-col items-center text-center relative z-10 bg-[#0D1117] print-bg-transparent">
+            {business.signature_url && (
+              <div className="mb-4 flex flex-col items-center bg-white/5 p-3 rounded-2xl border border-white/5 shadow-inner print-bg-transparent print-border">
+                <img src={business.signature_url} alt="Signature" className="h-10 object-contain mb-1 drop-shadow-md print-bg-transparent" crossOrigin="anonymous" />
+                <div className="w-40 border-t border-white/20 pt-1.5 text-[8px] text-[#8B949E] uppercase font-black tracking-widest print-border print-text-gray">Authorized Sign</div>
+              </div>
+            )}
+            <p className="text-xs font-black text-white mb-3 print-text-white">{business.footer_message || 'Thank you for your business!'}</p>
+            
+            {(business.warranty_policy || business.return_policy) && (
+              <div className="w-full text-left bg-white/5 p-3.5 rounded-xl border border-white/5 space-y-1.5 shadow-inner mb-4 print-bg-transparent print-border">
+                {business.warranty_policy && (
+                  <p className="text-[8px] text-[#8B949E] font-bold leading-relaxed uppercase print-text-gray"><span className="text-white print-text-white">Warranty:</span> {business.warranty_policy}</p>
+                )}
+                {business.return_policy && (
+                  <p className="text-[8px] text-[#8B949E] font-bold leading-relaxed uppercase print-text-gray"><span className="text-white print-text-white">Returns:</span> {business.return_policy}</p>
+                )}
+              </div>
+            )}
+
+            {/* Premium Cryptographic Badge */}
+            <div className="flex items-center gap-2 justify-center bg-[#161B22] px-4 py-2 rounded-full border border-white/10 shadow-lg mt-2 print-bg-transparent print-border">
+              <ShieldCheck className="w-3.5 h-3.5" style={{ color: brandColor }} />
+              <span className="text-[9px] font-mono font-bold text-white uppercase tracking-widest print-text-gray">ID: {receipt.verification_code}</span>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
   )
 }
-
