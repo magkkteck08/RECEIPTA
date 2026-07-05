@@ -127,16 +127,37 @@ export default function AnalyticsPage() {
   const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
   const netProfit = totalRevenue - totalExpenses
 
-  // 📊 BUILDING THE CUSTOM CSS CHART (Grouping Revenue by Day)
+  // 📊 BUILDING THE FLAWLESS 7-DAY CHART ENGINE
   const dailyData: Record<string, number> = {}
+  
+  // Step 1: Pre-fill the last 7 days with exactly 0 (prevents missing days)
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    dailyData[dateStr] = 0
+  }
+
+  // Step 2: Inject the actual revenue into those 7 days
   receipts.forEach(r => {
-    const date = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    dailyData[date] = (dailyData[date] || 0) + Number(r.grand_total)
+    const dateStr = new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (dailyData[dateStr] !== undefined) {
+      dailyData[dateStr] += Number(r.grand_total)
+    }
   })
 
-  const chartLabels = Object.keys(dailyData).slice(-7)
-  const chartValues = Object.values(dailyData).slice(-7)
-  const maxChartValue = Math.max(...chartValues, 1)
+  const chartLabels = Object.keys(dailyData)
+  const chartValues = Object.values(dailyData)
+  
+  // Calculate max value for the Y-Axis (ensuring it's never 0 to prevent div-by-zero)
+  const rawMax = Math.max(...chartValues)
+  const maxChartValue = rawMax > 0 ? rawMax * 1.1 : 100 // Add 10% headroom to the highest bar
+  
+  // Helper to format Y-Axis numbers (e.g. 50k instead of 50000)
+  const formatYAxis = (val: number) => {
+    if (val === 0) return '0'
+    return val >= 1000 ? (val / 1000).toFixed(1).replace('.0', '') + 'k' : Math.round(val).toString()
+  }
 
   return (
     <div className="min-h-full bg-[#0F1117] rounded-3xl border border-[#252733] shadow-2xl relative overflow-hidden pb-10">
@@ -217,7 +238,7 @@ export default function AnalyticsPage() {
           </Card>
         </div>
 
-        {/* Beautiful Custom CSS Chart */}
+        {/* 📊 ENTERPRISE CSS BAR CHART */}
         <Card className="bg-[#1C1E28] border-[#252733] shadow-xl overflow-hidden">
           <CardHeader className="bg-[#15171F] border-b border-[#252733] pb-4">
             <CardTitle className="flex items-center text-white text-lg">
@@ -225,41 +246,61 @@ export default function AnalyticsPage() {
               7-Day Sales Trend (Revenue)
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-4 sm:p-8">
             
-            {chartLabels.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-[#737490]">
-                <Calendar className="w-12 h-12 mb-4 opacity-20" />
-                <p>No sales data to display yet.</p>
+            <div className="relative h-64 sm:h-80 w-full flex pt-6">
+              
+              {/* Y-Axis Column */}
+              <div className="flex flex-col justify-between h-full pr-4 pb-8 text-[10px] font-bold text-[#737490] text-right w-12 sm:w-16 border-r border-[#252733] relative z-10">
+                <span>{business?.currency || '₦'}{formatYAxis(maxChartValue)}</span>
+                <span>{business?.currency || '₦'}{formatYAxis(maxChartValue / 2)}</span>
+                <span>0</span>
               </div>
-            ) : (
-              <div className="h-64 flex items-end gap-2 sm:gap-4 pt-6">
+
+              {/* Chart Grid & Bars Area */}
+              <div className="flex-1 relative flex items-end justify-between px-2 sm:px-6 pb-8 h-full">
+                
+                {/* Horizontal Background Grid Lines */}
+                <div className="absolute inset-0 flex flex-col justify-between pb-8 pointer-events-none px-2 sm:px-6">
+                  <div className="w-full h-px bg-[#252733]"></div>
+                  <div className="w-full h-px bg-[#252733]"></div>
+                  <div className="w-full h-px bg-[#252733]"></div>
+                </div>
+
+                {/* Vertical Data Bars */}
                 {chartLabels.map((label, index) => {
                   const value = chartValues[index]
-                  // Calculate height percentage relative to the highest day
-                  const heightPercent = Math.max((value / maxChartValue) * 100, 5) 
+                  // Minimum 1% height just so a 0 value still shows a tiny visual dot
+                  const heightPercent = Math.max((value / maxChartValue) * 100, 1) 
 
                   return (
-                    <div key={label} className="flex-1 flex flex-col items-center group">
-                      {/* Tooltip (Shows on hover) */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-[#15171F] text-white text-xs py-1 px-2 rounded border border-[#252733] mb-2 pointer-events-none whitespace-nowrap z-10">
+                    <div key={label} className="relative flex flex-col items-center group h-full justify-end w-full px-1 sm:px-3 z-10">
+                      
+                      {/* Interactive Hover Tooltip */}
+                      <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-white text-black text-xs py-1.5 px-3 rounded-lg font-black shadow-[0_10px_20px_rgba(0,0,0,0.5)] pointer-events-none whitespace-nowrap z-30">
                         {business?.currency || '₦'}{value.toLocaleString()}
+                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white"></div>
                       </div>
                       
                       {/* The Bar */}
                       <div 
-                        className="w-full bg-gradient-to-t from-[#FF6B4A]/40 to-[#FF6B4A] rounded-t-md transition-all duration-500 hover:opacity-80 relative"
+                        className="w-full max-w-[36px] bg-gradient-to-t from-[#FF6B4A]/20 to-[#FF6B4A] rounded-t-md transition-all duration-700 ease-out hover:opacity-80 relative overflow-hidden"
                         style={{ height: `${heightPercent}%` }}
-                      ></div>
+                      >
+                         {/* Bar inner highlight for 3D effect */}
+                         {value > 0 && <div className="absolute top-0 left-0 w-full h-1 bg-white/40"></div>}
+                      </div>
                       
-                      {/* X-Axis Label */}
-                      <span className="text-[10px] text-[#737490] mt-3 font-bold uppercase truncate max-w-full px-1">{label}</span>
+                      {/* X-Axis Date Label */}
+                      <span className="absolute -bottom-6 text-[9px] sm:text-[10px] text-[#737490] font-bold uppercase truncate">
+                        {label}
+                      </span>
                     </div>
                   )
                 })}
               </div>
-            )}
-            
+
+            </div>
           </CardContent>
         </Card>
 
