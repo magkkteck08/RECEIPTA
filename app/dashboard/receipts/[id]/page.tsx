@@ -155,7 +155,6 @@ export default function ReceiptPreview() {
   const brandColor = business.brand_primary_color || '#00C896' 
   const docType = receipt.document_type || 'Receipt'
 
-  // Format dates cleanly for the new UI
   const rawDate = new Date(receipt.created_at)
   const displayDate = rawDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
   const displayTime = rawDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
@@ -248,9 +247,9 @@ export default function ReceiptPreview() {
               </div>
             )}
             
-            {/* HERO BUSINESS NAME */}
+            {/* HERO BUSINESS NAME WITH ®️ */}
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase leading-tight print-text-white drop-shadow-md">
-              {business.business_name}
+              {business.business_name}®
             </h1>
             
             <div className="mt-3 space-y-0.5">
@@ -314,7 +313,7 @@ export default function ReceiptPreview() {
 
           <div className="w-full border-t border-dashed border-white/10 my-1 relative z-10 print-border"></div>
 
-          {/* ITEMS TABLE (Enhanced Spacing) */}
+          {/* ITEMS TABLE */}
           <div className="px-8 py-5 relative z-10">
             <table className="w-full text-left">
               <thead>
@@ -397,11 +396,9 @@ export default function ReceiptPreview() {
               <span className="text-[11px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Total</span>
               
               {!business?.hide_watermark && (
-                <div className="flex flex-col gap-1 mt-2 opacity-70">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-white print-text-gray" />
-                    <span className="text-[8px] font-black uppercase tracking-widest text-white print-text-gray">Powered by Receipta</span>
-                  </div>
+                <div className="flex items-center gap-1.5 mt-1.5 opacity-70">
+                  <ShieldCheck className="w-3.5 h-3.5 text-white print-text-gray" />
+                  <span className="text-[8px] font-black uppercase tracking-widest text-white print-text-gray">Powered by Receipta</span>
                 </div>
               )}
             </div>
@@ -414,20 +411,20 @@ export default function ReceiptPreview() {
             </div>
           </div>
 
-          {/* ENTERPRISE SECURITY CARD FOOTER */}
-          <div className="px-8 pt-8 pb-10 flex flex-col relative z-10 bg-[#0D1117] print-bg-transparent border-t border-white/5">
+          {/* COMPACT SECURITY FOOTER */}
+          <div className="px-8 pt-6 pb-6 flex flex-col relative z-10 bg-[#0D1117] print-bg-transparent border-t border-white/5">
             
             {business.signature_url && (
-              <div className="mb-8 flex flex-col items-center">
+              <div className="mb-5 flex flex-col items-center">
                 <img src={business.signature_url} alt="Signature" className="h-12 object-contain mb-2 drop-shadow-md print-bg-transparent" crossOrigin="anonymous" />
                 <div className="w-48 border-t border-white/20 pt-2 text-[9px] text-[#8B949E] uppercase font-black tracking-widest text-center print-border print-text-gray">Authorized Sign</div>
               </div>
             )}
 
-            <p className="text-sm font-black text-white text-center mb-6 print-text-white">{business.footer_message || 'Thank you for your business!'}</p>
+            <p className="text-sm font-black text-white text-center mb-5 print-text-white">{business.footer_message || 'Thank you for your business!'}</p>
             
             {(business.warranty_policy || business.return_policy) && (
-              <div className="w-full text-left bg-[#161B22] p-4 rounded-xl border border-white/5 space-y-2 mb-6 print-bg-transparent print-border">
+              <div className="w-full text-left bg-[#161B22] p-4 rounded-xl border border-white/5 space-y-1.5 mb-5 print-bg-transparent print-border">
                 {business.warranty_policy && (
                   <p className="text-[9px] text-[#8B949E] font-bold leading-relaxed uppercase print-text-gray"><span className="text-white print-text-white">Warranty:</span> {business.warranty_policy}</p>
                 )}
@@ -437,10 +434,9 @@ export default function ReceiptPreview() {
               </div>
             )}
 
-
-            {/* VERIFICATION ID PILL */}
-            <div className="mt-8 flex justify-center">
-              <div className="flex items-center gap-2 bg-[#0A0C10] px-5 py-2.5 rounded-full border border-white/10 shadow-lg print-bg-transparent print-border">
+            {/* VERIFICATION ID PILL (Pulled tightly under the content) */}
+            <div className="flex justify-center w-full">
+              <div className="flex items-center gap-2 bg-[#0A0C10] px-5 py-2.5 rounded-full border border-white/10 shadow-sm print-bg-transparent print-border">
                 <ShieldCheck className="w-4 h-4" style={{ color: brandColor }} />
                 <span className="text-[10px] font-mono font-bold text-white uppercase tracking-widest print-text-gray">ID: {receipt.verification_code}</span>
               </div>
@@ -452,3 +448,4 @@ export default function ReceiptPreview() {
     </div>
   )
 }
+
