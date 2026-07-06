@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
-import { Package, Plus, Search, Trash2, Tag, Lock } from 'lucide-react'
+import { Package, Plus, Search, Trash2, Tag, Lock, Layers } from 'lucide-react'
 import Link from 'next/link'
 
 // Shadcn UI Imports
@@ -21,7 +21,8 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
 
-  const [newProduct, setNewProduct] = useState({ name: '', price: '' })
+  // Added 'stock' to the new product state
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: '' })
 
   useEffect(() => {
     fetchData()
@@ -48,14 +49,16 @@ export default function ProductsPage() {
 
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault()
-    if (!newProduct.name || !newProduct.price) return toast.error("Please fill all fields")
+    // Validating the new stock field
+    if (!newProduct.name || !newProduct.price || !newProduct.stock) return toast.error("Please fill all fields")
 
     setSaving(true)
     try {
       const { data, error } = await supabase.from('products').insert({
         business_id: business.id,
         name: newProduct.name,
-        price: Number(newProduct.price)
+        price: Number(newProduct.price),
+        stock: Number(newProduct.stock) // Pushing stock count to DB
       }).select().single()
 
       if (error) throw error
@@ -65,7 +68,8 @@ export default function ProductsPage() {
       })
       
       setProducts([data, ...products])
-      setNewProduct({ name: '', price: '' })
+      // Resetting form including stock
+      setNewProduct({ name: '', price: '', stock: '' })
     } catch (error: any) {
       toast.error(error.message || "Failed to add product")
     } finally {
@@ -128,7 +132,7 @@ export default function ProductsPage() {
         <div className="border-b border-[#252733] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-white tracking-tight">Product Catalog</h1>
-            <p className="text-[#737490] mt-1 text-sm font-medium">Save your items here for 1-click auto-fill on your receipts.</p>
+            <p className="text-[#737490] mt-1 text-sm font-medium">Manage your items and track available stock levels.</p>
           </div>
           
           <div className="flex items-center gap-2 bg-[#1C1E28] border border-[#252733] px-4 py-2 rounded-xl">
@@ -157,6 +161,15 @@ export default function ProductsPage() {
                   <div>
                     <Label className={labelTheme}>Default Price ({business?.currency || '₦'}) <span className="text-[#FB7185]">*</span></Label>
                     <Input required type="number" min="0" placeholder="e.g. 1500000" className={inputTheme} value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} />
+                  </div>
+                  
+                  {/* NEW STOCK FIELD */}
+                  <div>
+                    <Label className={labelTheme}>Available Stock <span className="text-[#FB7185]">*</span></Label>
+                    <div className="relative">
+                      <Layers className="absolute left-3 top-3.5 w-4 h-4 text-[#737490]" />
+                      <Input required type="number" min="0" placeholder="e.g. 50" className={`${inputTheme} pl-10`} value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: e.target.value})} />
+                    </div>
                   </div>
                   
                   <Button type="submit" disabled={saving} className="w-full h-12 mt-2 bg-[#FF6B4A] hover:bg-[#E05535] text-white font-bold rounded-xl shadow-[0_0_15px_rgba(255,107,74,0.2)] transition-all">
@@ -197,8 +210,20 @@ export default function ProductsPage() {
                         </div>
                         <div>
                           <h4 className="text-white font-bold text-base">{product.name}</h4>
-                          <div className="text-sm font-bold text-[#FF6B4A] mt-1">
-                            {business?.currency || '₦'}{Number(product.price).toLocaleString()}
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="text-sm font-bold text-[#FF6B4A]">
+                              {business?.currency || '₦'}{Number(product.price).toLocaleString()}
+                            </div>
+                            <span className="text-[#4b5563] text-[10px]">•</span>
+                            
+                            {/* NEW STOCK BADGE */}
+                            <div className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                              Number(product.stock) > 0 
+                                ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20' 
+                                : 'bg-[#FB7185]/10 text-[#FB7185] border border-[#FB7185]/20'
+                            }`}>
+                              {product.stock || 0} IN STOCK
+                            </div>
                           </div>
                         </div>
                       </div>
