@@ -153,10 +153,16 @@ export default function AnalyticsPage() {
   const rawMax = Math.max(...chartValues)
   const maxChartValue = rawMax > 0 ? rawMax * 1.1 : 100 // Add 10% headroom to the highest bar
   
-  // Helper to format Y-Axis numbers (e.g. 50k instead of 50000)
+  // Helper to format Y-Axis numbers cleanly
   const formatYAxis = (val: number) => {
     if (val === 0) return '0'
-    return val >= 1000 ? (val / 1000).toFixed(1).replace('.0', '') + 'k' : Math.round(val).toString()
+    if (val >= 1000000) {
+      return (val / 1000000).toFixed(1).replace('.0', '') + 'M'
+    }
+    if (val >= 1000) {
+      return Math.round(val / 1000).toString() + 'k'
+    }
+    return Math.round(val).toString()
   }
 
   return (
