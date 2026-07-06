@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
 import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText, Package, Check } from 'lucide-react'
+import { nanoid } from 'nanoid' // Important: npm i nanoid
 
 // Shadcn Overrides
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,10 +59,12 @@ export default function CreateReceiptPage() {
     async function loadDefaults() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // 1. Fetch Business
         const { data: biz } = await supabase.from('businesses').select('*').eq('user_id', user.id).single()
         if (biz) {
           setBusiness(biz)
           
+          // 2. Fetch Available Inventory (Only items in stock)
           const { data: prods } = await supabase
             .from('products')
             .select('*')
@@ -113,11 +116,40 @@ export default function CreateReceiptPage() {
     setItems(items.filter(item => item.id !== id))
   }
 
+  // ⚡ INVENTORY AUTO-FILL ENGINE 
+  // Safely updates all fields in a single state cycle to avoid React closure traps
+  const applyInventoryItem = (rowId: number, product: any | null) => {
+    setItems(prevItems => prevItems.map(item => {
+      if (item.id === rowId) {
+        if (product) {
+          // Auto-fill from inventory
+          return {
+            ...item,
+            product_id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1
+          }
+        } else {
+          // Revert to Manual Entry
+          return {
+            ...item,
+            product_id: null,
+            name: '',
+            price: ''
+          }
+        }
+      }
+      return item;
+    }))
+    setOpenDropdownId(null);
+  }
+
   const updateItem = (id: number, field: string, value: any) => {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
 
-  // 🚀 SAVE LOGIC
+  // 🚀 UPDATED SAVE LOGIC WITH STOCK DEDUCTION
   async function handleGenerateReceipt(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -127,11 +159,13 @@ export default function CreateReceiptPage() {
         throw new Error("Please provide an Item Name for all products.")
       }
 
-      const receiptNumber = `${business.receipt_prefix}-${business.receipt_start_number + Math.floor(Math.random() * 1000)}`
-      const verificationCode = `VRF-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
+      // Generate secure IDs
+      const receiptNumber = `${business.receipt_prefix}-${nanoid(7).toUpperCase()}`
+      const verificationCode = `VRF-${nanoid(10).toUpperCase()}`
 
       const isPaid = documentType === 'Receipt' ? grandTotal : 0
 
+      // 1. Insert Document Master Record
       const { data: receipt, error: receiptError } = await supabase.from('receipts').insert({
         business_id: business.id,
         receipt_number: receiptNumber,
@@ -154,6 +188,7 @@ export default function CreateReceiptPage() {
 
       if (receiptError) throw receiptError
 
+      // 2. Format Line Items
       const lineItems = items.map(item => {
         let finalItemName = item.name
         let finalSerialNumber = item.serial_number ? `S/N: ${item.serial_number}` : '' 
@@ -188,19 +223,25 @@ export default function CreateReceiptPage() {
         }
       })
 
+      // 3. Save Line Items to DB
       const { error: itemsError } = await supabase.from('receipt_items').insert(lineItems)
       if (itemsError) throw itemsError
 
+      // 📦 4. INVENTORY REDUCTION ENGINE (Only if it's an actual sale/receipt)
       if (documentType === 'Receipt') {
         const stockUpdates = items
-          .filter(i => i.product_id) 
+          .filter(i => i.product_id) // Only process items that were selected from inventory
           .map(async (i) => {
+             // Fetch current stock to ensure accuracy
              const { data: p } = await supabase.from('products').select('stock').eq('id', i.product_id).single()
              if (p) {
+                // Ensure stock doesn't drop below 0 mathematically
                 const newStock = Math.max(0, p.stock - (Number(i.quantity) || 1))
                 await supabase.from('products').update({ stock: newStock }).eq('id', i.product_id)
              }
           })
+        
+        // Execute all stock updates in parallel
         await Promise.all(stockUpdates)
       }
 
@@ -217,6 +258,7 @@ export default function CreateReceiptPage() {
     }
   }
 
+  // UI Themes
   const inputTheme = "bg-[#15171F] border-[#252733] text-[#EEEEF5] placeholder:text-[#737490] focus-visible:ring-[#FF6B4A] focus-visible:border-[#FF6B4A]"
   const labelTheme = "text-[11px] font-bold text-[#EEEEF5] uppercase tracking-wider mb-1.5 block"
 
@@ -251,19 +293,19 @@ export default function CreateReceiptPage() {
             <p className="text-[#737490] mt-1 text-sm">Fill in the transaction details to generate a secure {documentType.toLowerCase()}.</p>
           </div>
 
-          <div className="flex bg-[#1C1E28] p-1.5 rounded-xl border border-[#252733] shadow-inner">
+          <div className="flex bg-[#1C1E28] p-1.5 rounded-xl border border-[#252733] shadow-inner overflow-x-auto custom-scrollbar">
             {['Receipt', 'Invoice', 'Quotation'].map(type => (
               <button
                 key={type}
                 type="button"
                 onClick={() => setDocumentType(type)}
-                className={`px-5 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center ${
+                className={`px-5 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center whitespace-nowrap ${
                   documentType === type 
                   ? 'bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] shadow-lg scale-100' 
                   : 'text-[#737490] hover:text-white hover:bg-[#252733] scale-95'
                 }`}
               >
-                <FileText className={`w-4 h-4 mr-2 ${documentType === type ? 'text-[#0F1117]' : 'text-[#737490]'}`} />
+                <FileText className={`w-4 h-4 mr-2 flex-shrink-0 ${documentType === type ? 'text-[#0F1117]' : 'text-[#737490]'}`} />
                 {type}
               </button>
             ))}
@@ -343,7 +385,7 @@ export default function CreateReceiptPage() {
                     {inventory.length > 0 && (
                       <div className="mb-6 relative z-50">
                         <Label className={`${labelTheme} !text-[#FF6B4A] flex items-center mb-2`}>
-                          <Package className="w-3.5 h-3.5 mr-1.5" /> Auto-Fill from Inventory
+                          <Package className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" /> Auto-Fill from Inventory
                         </Label>
                         
                         {/* Custom Select Trigger */}
@@ -366,31 +408,22 @@ export default function CreateReceiptPage() {
                         {/* Custom Select Dropdown Menu */}
                         {openDropdownId === item.id && (
                           <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-[#1C1E28] border border-[#252733] rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                            <div className="max-h-60 overflow-y-auto custom-scrollbar divide-y divide-[#252733]/50">
                               
                               {/* Manual Entry Option */}
                               <div 
-                                onClick={() => {
-                                  updateItem(item.id, 'product_id', null);
-                                  setOpenDropdownId(null);
-                                }}
-                                className="px-4 py-3 flex items-center justify-between cursor-pointer border-b border-[#252733]/50 transition-colors hover:bg-[#252733] text-[#737490] hover:text-white"
+                                onClick={() => applyInventoryItem(item.id, null)}
+                                className="px-4 py-3.5 flex items-center justify-between cursor-pointer transition-colors hover:bg-[#252733] text-[#737490] hover:text-white"
                               >
                                 <span className="font-medium">-- Manual Entry --</span>
-                                {!item.product_id && <Check className="w-4 h-4 text-[#FF6B4A]" />}
+                                {!item.product_id && <Check className="w-4 h-4 text-[#FF6B4A] flex-shrink-0" />}
                               </div>
 
                               {/* Inventory Product Options */}
                               {inventory.map(p => (
                                 <div 
                                   key={p.id}
-                                  onClick={() => {
-                                    updateItem(item.id, 'product_id', p.id);
-                                    updateItem(item.id, 'name', p.name);
-                                    updateItem(item.id, 'price', p.price);
-                                    updateItem(item.id, 'quantity', 1);
-                                    setOpenDropdownId(null); // Close after selection
-                                  }}
+                                  onClick={() => applyInventoryItem(item.id, p)}
                                   className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors ${
                                     item.product_id === p.id 
                                     ? 'bg-[#FF6B4A]/10 text-white' 
@@ -558,7 +591,7 @@ export default function CreateReceiptPage() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
                 
                 {documentType !== 'Quotation' ? (
                   <div className="space-y-2">
@@ -575,7 +608,7 @@ export default function CreateReceiptPage() {
                   </div>
                 ) : (
                   <div className="space-y-2 flex flex-col justify-center bg-[#15171F] border border-[#252733] rounded-md px-4 opacity-50">
-                    <span className="text-[#737490] text-xs font-bold uppercase">Payment N/A for Quotation</span>
+                    <span className="text-[#737490] text-xs font-bold uppercase tracking-wider">Payment N/A for Quotation</span>
                   </div>
                 )}
                 
@@ -634,7 +667,7 @@ export default function CreateReceiptPage() {
                   <Button 
                     type="submit" 
                     disabled={saving} 
-                    className="w-full h-14 mt-6 bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] hover:from-[#E05535] hover:to-[#10B981] font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(110,231,183,0.2)] hover:shadow-[0_0_30px_rgba(110,231,183,0.4)] transition-all uppercase"
+                    className="w-full h-14 mt-6 bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] hover:from-[#E05535] hover:to-[#10B981] font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(110,231,183,0.2)] hover:shadow-[0_0_30px_rgba(110,231,183,0.4)] transition-all uppercase tracking-tight"
                   >
                     <Save className="w-5 h-5 mr-2" /> 
                     {saving ? 'GENERATING...' : `ISSUE ${documentType}`}
