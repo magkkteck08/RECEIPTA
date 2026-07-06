@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
-import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText } from 'lucide-react'
+import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText, Package } from 'lucide-react'
 
 // Shadcn Overrides
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,25 +19,27 @@ export default function CreateReceiptPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [business, setBusiness] = useState<any>(null)
+  
+  // 📦 NEW: Inventory State
+  const [inventory, setInventory] = useState<any[]>([])
 
-  // 📄 NEW: Document Type State (Receipt, Invoice, Quotation)
+  // 📄 Document Type State
   const [documentType, setDocumentType] = useState('Receipt')
 
   // Form State
   const [customer, setCustomer] = useState({ name: '', phone: '', email: '' })
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer')
-  
-  // Shipping initialized as empty string for smooth UX
   const [shipping, setShipping] = useState<number | string>('')
   
-  // Dynamic Items State with <any[]> to satisfy TypeScript
+  // Dynamic Items State (Now includes product_id for stock tracking)
   const [items, setItems] = useState<any[]>([
     { 
       id: 1, 
+      product_id: null,
       name: '', 
       serial_number: '', 
       quantity: 1, 
-      price: '', // Empty by default so there's no "0" to delete
+      price: '', 
       showGadgetMode: false,
       condition: 'Brand New',
       specs: '',
@@ -48,13 +50,26 @@ export default function CreateReceiptPage() {
     }
   ])
 
-  // Fetch Business Defaults on Load
+  // Fetch Business & Inventory on Load
   useEffect(() => {
     async function loadDefaults() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data } = await supabase.from('businesses').select('*').eq('user_id', user.id).single()
-        if (data) setBusiness(data)
+        // 1. Fetch Business
+        const { data: biz } = await supabase.from('businesses').select('*').eq('user_id', user.id).single()
+        if (biz) {
+          setBusiness(biz)
+          
+          // 2. Fetch Available Inventory (Only items in stock)
+          const { data: prods } = await supabase
+            .from('products')
+            .select('*')
+            .eq('business_id', biz.id)
+            .gt('stock', 0)
+            .order('name', { ascending: true })
+            
+          if (prods) setInventory(prods)
+        }
       }
       setLoading(false)
     }
@@ -76,6 +91,7 @@ export default function CreateReceiptPage() {
       ...items, 
       { 
         id: Date.now(), 
+        product_id: null,
         name: '', 
         serial_number: '', 
         quantity: 1, 
@@ -100,13 +116,12 @@ export default function CreateReceiptPage() {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
 
-  // 🚀 UPDATED SAVE LOGIC
+  // 🚀 UPDATED SAVE LOGIC WITH STOCK DEDUCTION
   async function handleGenerateReceipt(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
 
     try {
-      // Validate that at least a name is provided. Price can be 0 (Free/Bonus).
       if (items.some(i => !i.name)) {
         throw new Error("Please provide an Item Name for all products.")
       }
@@ -114,23 +129,18 @@ export default function CreateReceiptPage() {
       const receiptNumber = `${business.receipt_prefix}-${business.receipt_start_number + Math.floor(Math.random() * 1000)}`
       const verificationCode = `VRF-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
 
-      // Calculate Paid Status based on type
-      // Invoices and Quotations start with 0 paid. Receipts are fully paid.
       const isPaid = documentType === 'Receipt' ? grandTotal : 0
 
-      // Insert Document Master Record with Dynamic Type
+      // 1. Insert Document Master Record
       const { data: receipt, error: receiptError } = await supabase.from('receipts').insert({
         business_id: business.id,
         receipt_number: receiptNumber,
         verification_code: verificationCode,
-        document_type: documentType, // 'Receipt', 'Invoice', or 'Quotation'
+        document_type: documentType, 
         payment_method: documentType === 'Quotation' ? null : paymentMethod,
-        
-        // 👈 KEY FIX: Added the customer details into the payload
         customer_name: customer.name || null,
         customer_phone: customer.phone || null,
         customer_email: customer.email || null,
-
         subtotal: subtotal,
         tax_percentage: taxRate,
         tax_amount: taxAmount,
@@ -138,18 +148,17 @@ export default function CreateReceiptPage() {
         discount_amount: discountAmount,
         shipping_fee: Number(shipping) || 0,
         grand_total: grandTotal,
-        amount_paid: isPaid, // Invoices/Quotes don't add to "Volume" yet
+        amount_paid: isPaid,
         warranty_days: business.default_warranty_days || 0,
       }).select().single()
 
       if (receiptError) throw receiptError
 
-      // Format Line Items beautifully for the DB
+      // 2. Format Line Items
       const lineItems = items.map(item => {
         let finalItemName = item.name
         let finalSerialNumber = item.serial_number ? `S/N: ${item.serial_number}` : '' 
         
-        // Build the Gadget Strings if Gadget Mode is active
         if (item.showGadgetMode) {
           const specsArray = []
           if (item.condition) specsArray.push(item.condition)
@@ -166,7 +175,7 @@ export default function CreateReceiptPage() {
           if (item.sn) serialArray.push(`S/N: ${item.sn}`)
           
           if (serialArray.length > 0) {
-            finalSerialNumber = serialArray.join('\n') // Stacks them neatly
+            finalSerialNumber = serialArray.join('\n') 
           }
         }
 
@@ -175,13 +184,32 @@ export default function CreateReceiptPage() {
           item_name: finalItemName,
           serial_number: finalSerialNumber,
           quantity: Number(item.quantity) || 1,
-          unit_price: Number(item.price) || 0, // Fallback to 0 if left blank
+          unit_price: Number(item.price) || 0, 
           total_price: (Number(item.quantity) || 1) * (Number(item.price) || 0)
         }
       })
 
+      // 3. Save Line Items to DB
       const { error: itemsError } = await supabase.from('receipt_items').insert(lineItems)
       if (itemsError) throw itemsError
+
+      // 📦 4. INVENTORY REDUCTION ENGINE (Only if it's an actual sale/receipt)
+      if (documentType === 'Receipt') {
+        const stockUpdates = items
+          .filter(i => i.product_id) // Only process items that were selected from inventory
+          .map(async (i) => {
+             // Fetch current stock to ensure accuracy
+             const { data: p } = await supabase.from('products').select('stock').eq('id', i.product_id).single()
+             if (p) {
+                // Ensure stock doesn't drop below 0 mathematically
+                const newStock = Math.max(0, p.stock - (Number(i.quantity) || 1))
+                await supabase.from('products').update({ stock: newStock }).eq('id', i.product_id)
+             }
+          })
+        
+        // Execute all stock updates in parallel
+        await Promise.all(stockUpdates)
+      }
 
       toast.success(`${documentType} created!`, { 
         style: { background: '#1C1E28', color: '#00C896' } 
@@ -211,12 +239,10 @@ export default function CreateReceiptPage() {
 
   return (
     <div className="min-h-full bg-[#0F1117] rounded-3xl border border-[#252733] shadow-2xl overflow-hidden relative">
-      {/* Background Glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#FF6B4A] rounded-full blur-[150px] opacity-5 pointer-events-none"></div>
 
       <form onSubmit={handleGenerateReceipt} className="relative z-10 p-4 md:p-8">
         
-        {/* HEADER & DYNAMIC DOCUMENT TYPE SELECTOR */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-[#252733] pb-6 mb-8 gap-6">
           <div>
             <h1 className="text-3xl font-black text-white tracking-tight">Create {documentType}</h1>
@@ -244,10 +270,8 @@ export default function CreateReceiptPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* LEFT COLUMN: Inputs */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Customer Information Card */}
             <Card className="bg-[#1C1E28] border-[#252733] shadow-xl overflow-hidden">
               <CardHeader className="bg-[#15171F] border-b border-[#252733] pb-4">
                 <CardTitle className="flex items-center text-white text-lg">
@@ -289,25 +313,20 @@ export default function CreateReceiptPage() {
               </CardContent>
             </Card>
 
-            {/* Line Items Card */}
             <Card className="bg-[#1C1E28] border-[#252733] shadow-xl overflow-hidden">
               <CardHeader className="bg-[#15171F] border-b border-[#252733] pb-4 flex flex-row items-center justify-between">
-                
-                {/* 📄 DYNAMIC CARD TITLE INSTALLED HERE */}
                 <CardTitle className="flex items-center text-white text-lg">
                   <div className="p-2 bg-[#F4C542]/10 rounded-lg mr-3">
                     <Receipt className="w-5 h-5 text-[#F4C542]" />
                   </div>
                   {documentType === 'Quotation' ? 'Items to Quote' : documentType === 'Invoice' ? 'Invoice Items' : 'Purchased Items'}
                 </CardTitle>
-
               </CardHeader>
               <CardContent className="p-6 space-y-6">
                 
                 {items.map((item, index) => (
                   <div key={item.id} className="p-5 bg-[#15171F] border border-[#252733] rounded-xl relative group transition-all">
                     
-                    {/* Delete Item Button */}
                     <div className="absolute -top-3 -right-3 z-10">
                       <button 
                         type="button" 
@@ -318,7 +337,38 @@ export default function CreateReceiptPage() {
                       </button>
                     </div>
                     
-                    {/* Basic Item Fields */}
+                    {/* 📦 INVENTORY AUTO-FILL DROPDOWN */}
+                    {inventory.length > 0 && (
+                      <div className="mb-5 bg-[#1C1E28] p-3 rounded-lg border border-[#FF6B4A]/30 shadow-inner">
+                        <Label className={`${labelTheme} !text-[#FF6B4A] flex items-center`}>
+                          <Package className="w-3.5 h-3.5 mr-1.5" /> Auto-Fill from Inventory
+                        </Label>
+                        <select
+                          className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`}
+                          value={item.product_id || ''}
+                          onChange={(e) => {
+                            const selectedId = e.target.value;
+                            const prod = inventory.find(p => p.id === selectedId);
+                            if (prod) {
+                              updateItem(item.id, 'product_id', prod.id);
+                              updateItem(item.id, 'name', prod.name);
+                              updateItem(item.id, 'price', prod.price);
+                              updateItem(item.id, 'quantity', 1);
+                            } else {
+                              updateItem(item.id, 'product_id', null);
+                            }
+                          }}
+                        >
+                          <option value="">-- Manual Entry --</option>
+                          {inventory.map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} ({p.stock} in stock) - {business?.currency || '₦'}{p.price.toLocaleString()}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
                       <div className="sm:col-span-6">
                         <Label className={labelTheme}>Item / Device Name <span className="text-[#FB7185]">*</span></Label>
@@ -362,7 +412,6 @@ export default function CreateReceiptPage() {
                       </div>
                     </div>
 
-                    {/* Gadget Mode Toggle */}
                     <div className="mt-4 border-t border-[#252733] pt-4">
                       <button 
                         type="button" 
@@ -375,7 +424,6 @@ export default function CreateReceiptPage() {
                       </button>
                     </div>
 
-                    {/* Gadget Mode Expanded UI */}
                     {item.showGadgetMode ? (
                       <div className="mt-4 p-4 bg-[#1C1E28] border-l-2 border-[#FF6B4A] rounded-r-lg grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-200">
                         <div className="space-y-1.5">
@@ -439,7 +487,6 @@ export default function CreateReceiptPage() {
                         </div>
                       </div>
                     ) : (
-                      // Basic Serial Number input if Gadget Mode is off
                       <div className="mt-4 relative">
                          <Label className={labelTheme}>Serial Number (Optional)</Label>
                          <Input 
@@ -465,10 +512,8 @@ export default function CreateReceiptPage() {
               </CardContent>
             </Card>
 
-            {/* Payment & Shipping Card */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 
-                {/* 🔒 DYNAMIC UI: Only show payment method if it is NOT a quotation */}
                 {documentType !== 'Quotation' ? (
                   <div className="space-y-2">
                     <Label className={labelTheme}>Payment Method</Label>
@@ -504,7 +549,6 @@ export default function CreateReceiptPage() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Live Summary Sticky Card */}
           <div className="lg:col-span-1">
             <div className="sticky top-8">
               <Card className="bg-[#1C1E28] border-[#252733] shadow-2xl overflow-hidden">
