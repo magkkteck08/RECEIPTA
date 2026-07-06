@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -24,7 +23,6 @@ export default function ReceiptPreview() {
   
   const receiptRef = useRef<HTMLDivElement>(null)
 
-  // Enterprise Web Crypto SHA-256 Generator
   const generateHash = async (id: string) => {
     try {
       const msgUint8 = new TextEncoder().encode(id)
@@ -52,7 +50,6 @@ export default function ReceiptPreview() {
       }
       setReceipt(receiptData)
 
-      // Generate authentic cryptographic hash
       if (receiptData.id) {
         const hash = await generateHash(receiptData.id)
         setDocumentHash(hash)
@@ -144,7 +141,6 @@ export default function ReceiptPreview() {
     const toastId = toast.loading('Rendering premium asset...')
 
     try {
-      // Memory-safe scaling for mobile devices while keeping high-res for desktop
       const pixelRatio = typeof window !== 'undefined' && window.devicePixelRatio > 2 ? 2 : 3
       
       const canvas = await html2canvas(receiptRef.current, {
@@ -191,14 +187,13 @@ export default function ReceiptPreview() {
   const displayDate = rawDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
   const displayTime = rawDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
-  // Database-driven dates with logical fallbacks
   let displayFutureDate = ''
   if (docType === 'Invoice') {
     if (receipt.due_date) {
       displayFutureDate = new Date(receipt.due_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
     } else {
       const futureDate = new Date(rawDate)
-      futureDate.setDate(futureDate.getDate() + 7) // Fallback Net 7
+      futureDate.setDate(futureDate.getDate() + 7)
       displayFutureDate = futureDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
     }
   } else if (docType === 'Quotation') {
@@ -206,14 +201,13 @@ export default function ReceiptPreview() {
       displayFutureDate = new Date(receipt.valid_until).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
     } else {
       const futureDate = new Date(rawDate)
-      futureDate.setDate(futureDate.getDate() + 30) // Fallback 30 Days
+      futureDate.setDate(futureDate.getDate() + 30)
       displayFutureDate = futureDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
     }
   }
 
   const resolvedCustomerName = customer?.customer_name || customer?.name
 
-  // Generate 2-letter business initials
   const getBusinessInitials = (name: string) => {
     if (!name) return 'V'
     const words = name.trim().split(/\s+/)
@@ -221,7 +215,6 @@ export default function ReceiptPreview() {
     return name.substring(0, 2).toUpperCase()
   }
 
-  // Dynamic Data-Driven Status Badge Logic
   let statusBadge = { text: 'PAID', color: '#00C896', bg: '#00C89615', border: '#00C89630' }
   const currentStatus = (receipt.payment_status || '').toUpperCase()
 
@@ -297,20 +290,19 @@ export default function ReceiptPreview() {
         </div>
       </div>
 
-      {/* 📸 PRESENTATION CANVAS */}
+      {/* PRESENTATION CANVAS */}
       <div 
         ref={receiptRef} 
         className="print-canvas bg-[#0A0C10] p-8 md:p-16 flex items-center justify-center relative overflow-hidden"
       >
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[180px] opacity-20 pointer-events-none no-print" style={{ backgroundColor: brandColor }}></div>
 
-        {/* 💳 GLASS RECEIPT CARD */}
+        {/* GLASS RECEIPT CARD */}
         <div className="print-card w-full max-w-[420px] bg-[#161B22] border border-white/10 rounded-[32px] shadow-[0_40px_100px_rgba(0,0,0,0.9),0_0_40px_rgba(0,0,0,0.6)] relative z-10 overflow-hidden print-bg-transparent bg-noise">
           
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent no-print"></div>
           <div style={{ backgroundColor: brandColor, boxShadow: `0 0 20px ${brandColor}80` }} className="h-1.5 w-full relative z-20 no-print"></div>
 
-          {/* SOFTENED FACE/LOGO WATERMARK */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.03] z-0">
             {business.logo_url ? (
                <img src={business.logo_url} className="w-80 h-80 object-cover rounded-full grayscale mix-blend-screen" crossOrigin="anonymous" alt="" />
@@ -330,7 +322,7 @@ export default function ReceiptPreview() {
             )}
             
             <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase leading-tight print-text-white drop-shadow-md">
-              {business.business_name}
+              {business.business_name}✔️
             </h1>
             
             <div className="mt-3 space-y-0.5">
@@ -339,7 +331,6 @@ export default function ReceiptPreview() {
               <p className="text-[11px] text-[#8B949E] font-medium print-text-gray">{business.business_phone}</p>
             </div>
             
-            {/* 📄 DYNAMIC HEADER BADGE WITH ANIMATION */}
             <div className={`mt-5 transition-all duration-500 transform ${animateBadge ? 'scale-110 opacity-50' : 'scale-100 opacity-100'}`}>
                <span className="text-[10px] font-black uppercase tracking-[0.3em] px-5 py-2 rounded-full border bg-white/5 backdrop-blur-md shadow-inner print-bg-transparent print-border" style={{ color: brandColor, borderColor: `${brandColor}40` }}>
                   {docType}
@@ -353,14 +344,15 @@ export default function ReceiptPreview() {
           <div className="px-8 py-5 grid grid-cols-2 gap-y-5 relative z-10">
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Issue Date</p>
-              <p className="text-[12px] font-bold text-white mt-1 print-text-white">{displayDate} {docType === 'Receipt' && <span className="text-[#8B949E] text-[10px] font-medium print-text-gray ml-1">{displayTime}</span>}</p>
+              <p className="text-[12px] font-bold text-white mt-1 print-text-white">
+                {displayDate} <span className="text-[#8B949E] text-[10px] font-medium print-text-gray ml-1">{displayTime}</span>
+              </p>
             </div>
             <div className="text-right">
               <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">{docType} No.</p>
               <div className="flex justify-end items-center gap-2 mt-1">
                 <p className="text-[12px] font-mono font-bold text-white print-text-white">{receipt.receipt_number}</p>
                 
-                {/* DYNAMIC STATUS PILL */}
                 <span 
                   className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest print-border print-bg-transparent transition-colors duration-300"
                   style={{ color: statusBadge.color, backgroundColor: statusBadge.bg, borderColor: statusBadge.border, borderWidth: '1px' }}
@@ -370,7 +362,6 @@ export default function ReceiptPreview() {
               </div>
             </div>
             
-            {/* Dynamic Date based on Document Type */}
             {docType === 'Invoice' && (
               <div>
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#F4C542] print-text-gray">Due Date</p>
@@ -392,12 +383,11 @@ export default function ReceiptPreview() {
 
             <div className="text-right">
               <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">System Auth</p>
-              <p className="text-[12px] font-bold text-[#00C896] mt-1 uppercase print-text-gray">Generated By Receipta</p>
+              <p className="text-[10px] font-medium text-[#8B949E] mt-1 print-text-gray">Generated by Receipta</p>
             </div>
             
             {resolvedCustomerName && (
                <div className="col-span-2 pt-4 border-t border-white/5 mt-1 print-border flex items-center gap-3">
-                 {/* Premium Customer Avatar */}
                  <div className="w-10 h-10 rounded-full bg-[#1C2128] border border-white/10 flex items-center justify-center text-white font-black text-lg shadow-inner print-bg-transparent print-border print-text-gray">
                    {resolvedCustomerName.charAt(0).toUpperCase()}
                  </div>
@@ -483,7 +473,7 @@ export default function ReceiptPreview() {
             )}
           </div>
 
-          {/* UPGRADED TOTAL BOX */}
+          {/* TOTAL BOX */}
           <div 
             style={{ 
               backgroundColor: `${brandColor}10`, 
@@ -521,19 +511,26 @@ export default function ReceiptPreview() {
 
             <p className="text-sm font-black text-white text-center mb-5 print-text-white">{business.footer_message || 'Thank you for your business!'}</p>
             
-            {(business.warranty_policy || business.return_policy) && (
-              <div className="w-full text-left bg-[#161B22] p-4 rounded-xl border border-white/5 space-y-1.5 mb-5 print-bg-transparent print-border">
-                {business.warranty_policy && (
-                  <p className="text-[9px] text-[#8B949E] font-bold leading-relaxed uppercase print-text-gray"><span className="text-white print-text-white">Warranty:</span> {business.warranty_policy}</p>
-                )}
-                {business.return_policy && (
-                  <p className="text-[9px] text-[#8B949E] font-bold leading-relaxed uppercase print-text-gray"><span className="text-white print-text-white">Returns:</span> {business.return_policy}</p>
-                )}
-              </div>
-            )}
+            {/* INTEGRATED CARD CONTAINER (Warranty, Returns & Clickable Support Email) */}
+            <div className="w-full text-left bg-[#161B22] p-4 rounded-xl border border-white/5 space-y-2 mb-5 print-bg-transparent print-border">
+              {business.warranty_policy && (
+                <p className="text-[9px] text-[#8B949E] font-bold leading-relaxed uppercase print-text-gray"><span className="text-white print-text-white">Warranty:</span> {business.warranty_policy}</p>
+              )}
+              {business.return_policy && (
+                <p className="text-[9px] text-[#8B949E] font-bold leading-relaxed uppercase print-text-gray"><span className="text-white print-text-white">Returns:</span> {business.return_policy}</p>
+              )}
+              {business.business_email && (
+                <div className="pt-1 border-t border-white/5 flex items-center gap-1.5 print-border">
+                  <Mail className="w-3 h-3 text-[#8B949E] print-text-gray" />
+                  <a href={`mailto:${business.business_email}`} className="text-[9px] font-mono font-bold text-[#8B949E] hover:text-white transition-colors uppercase tracking-wider print-text-gray">
+                    <span className="text-white print-text-white">Support:</span> {business.business_email}
+                  </a>
+                </div>
+              )}
+            </div>
 
-            {/* UPGRADED QR VERIFICATION MATRIX */}
-            <div className="flex flex-col items-center justify-center w-full mb-6 mt-2">
+            {/* QR VERIFICATION MATRIX */}
+            <div className="flex flex-col items-center justify-center w-full mb-4 mt-1">
                <div className="bg-white p-2 rounded-xl mb-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] print-border">
                  <QRCodeSVG value={verifyUrl} size={80} level="H" />
                </div>
@@ -546,42 +543,28 @@ export default function ReceiptPreview() {
                </div>
             </div>
 
-            {/* CLICKABLE BUSINESS SOCIAL LINKS & EMAIL */}
-            <div className="flex flex-col items-center gap-3 border-t border-white/5 pt-5 pb-3 print-border">
-               <div className="flex justify-center items-center gap-5">
-                 {business.instagram && (
-                   <a href={business.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                     <Instagram className="w-4 h-4 text-[#8B949E] print-text-gray" />
-                   </a>
-                 )}
-                 {business.twitter && (
-                   <a href={business.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                     <Twitter className="w-4 h-4 text-[#8B949E] print-text-gray" />
-                   </a>
-                 )}
-                 {business.website && (
-                   <a href={business.website} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                     <Globe className="w-4 h-4 text-[#8B949E] print-text-gray" />
-                   </a>
-                 )}
-                 {business.business_email && (
-                   <a href={`mailto:${business.business_email}`} className="hover:text-white transition-colors">
-                     <Mail className="w-4 h-4 text-[#8B949E] print-text-gray" />
-                   </a>
-                 )}
-               </div>
-               
-               {/* Explicit Business Email for Print/Readability */}
-               {business.business_email && (
-                 <a href={`mailto:${business.business_email}`} className="text-[10px] font-mono font-medium text-[#8B949E] hover:text-white transition-colors print-text-gray">
-                   {business.business_email}
+            {/* BUSINESS SOCIAL LINKS */}
+            <div className="flex justify-center items-center gap-5 border-t border-white/5 pt-4 pb-2 print-border">
+               {business.instagram && (
+                 <a href={business.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                   <Instagram className="w-4 h-4 text-[#8B949E] print-text-gray" />
+                 </a>
+               )}
+               {business.twitter && (
+                 <a href={business.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                   <Twitter className="w-4 h-4 text-[#8B949E] print-text-gray" />
+                 </a>
+               )}
+               {business.website && (
+                 <a href={business.website} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                   <Globe className="w-4 h-4 text-[#8B949E] print-text-gray" />
                  </a>
                )}
             </div>
 
             {/* TRUE ENTERPRISE HASH FOOTPRINT */}
             <div className="text-center mt-2">
-               <p className="text-[7px] font-mono text-[#8B949E]/50 tracking-[0.2em] print-text-gray">{documentHash}</p>
+               <p className="text-[7px] font-mono text-[#8B949E]/40 tracking-[0.2em] print-text-gray">{documentHash}</p>
             </div>
 
           </div>
@@ -590,3 +573,4 @@ export default function ReceiptPreview() {
     </div>
   )
 }
+
