@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
-import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText, Package } from 'lucide-react'
+import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText, Package, Check } from 'lucide-react'
 
 // Shadcn Overrides
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,8 +20,11 @@ export default function CreateReceiptPage() {
   const [saving, setSaving] = useState(false)
   const [business, setBusiness] = useState<any>(null)
   
-  // 📦 NEW: Inventory State
+  // 📦 Inventory State
   const [inventory, setInventory] = useState<any[]>([])
+
+  // 🎯 Dropdown UI State
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
 
   // 📄 Document Type State
   const [documentType, setDocumentType] = useState('Receipt')
@@ -31,7 +34,7 @@ export default function CreateReceiptPage() {
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer')
   const [shipping, setShipping] = useState<number | string>('')
   
-  // Dynamic Items State (Now includes product_id for stock tracking)
+  // Dynamic Items State
   const [items, setItems] = useState<any[]>([
     { 
       id: 1, 
@@ -55,12 +58,10 @@ export default function CreateReceiptPage() {
     async function loadDefaults() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // 1. Fetch Business
         const { data: biz } = await supabase.from('businesses').select('*').eq('user_id', user.id).single()
         if (biz) {
           setBusiness(biz)
           
-          // 2. Fetch Available Inventory (Only items in stock)
           const { data: prods } = await supabase
             .from('products')
             .select('*')
@@ -116,7 +117,7 @@ export default function CreateReceiptPage() {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
 
-  // 🚀 UPDATED SAVE LOGIC WITH STOCK DEDUCTION
+  // 🚀 SAVE LOGIC
   async function handleGenerateReceipt(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -131,7 +132,6 @@ export default function CreateReceiptPage() {
 
       const isPaid = documentType === 'Receipt' ? grandTotal : 0
 
-      // 1. Insert Document Master Record
       const { data: receipt, error: receiptError } = await supabase.from('receipts').insert({
         business_id: business.id,
         receipt_number: receiptNumber,
@@ -154,7 +154,6 @@ export default function CreateReceiptPage() {
 
       if (receiptError) throw receiptError
 
-      // 2. Format Line Items
       const lineItems = items.map(item => {
         let finalItemName = item.name
         let finalSerialNumber = item.serial_number ? `S/N: ${item.serial_number}` : '' 
@@ -189,25 +188,19 @@ export default function CreateReceiptPage() {
         }
       })
 
-      // 3. Save Line Items to DB
       const { error: itemsError } = await supabase.from('receipt_items').insert(lineItems)
       if (itemsError) throw itemsError
 
-      // 📦 4. INVENTORY REDUCTION ENGINE (Only if it's an actual sale/receipt)
       if (documentType === 'Receipt') {
         const stockUpdates = items
-          .filter(i => i.product_id) // Only process items that were selected from inventory
+          .filter(i => i.product_id) 
           .map(async (i) => {
-             // Fetch current stock to ensure accuracy
              const { data: p } = await supabase.from('products').select('stock').eq('id', i.product_id).single()
              if (p) {
-                // Ensure stock doesn't drop below 0 mathematically
                 const newStock = Math.max(0, p.stock - (Number(i.quantity) || 1))
                 await supabase.from('products').update({ stock: newStock }).eq('id', i.product_id)
              }
           })
-        
-        // Execute all stock updates in parallel
         await Promise.all(stockUpdates)
       }
 
@@ -224,7 +217,6 @@ export default function CreateReceiptPage() {
     }
   }
 
-  // UI Themes
   const inputTheme = "bg-[#15171F] border-[#252733] text-[#EEEEF5] placeholder:text-[#737490] focus-visible:ring-[#FF6B4A] focus-visible:border-[#FF6B4A]"
   const labelTheme = "text-[11px] font-bold text-[#EEEEF5] uppercase tracking-wider mb-1.5 block"
 
@@ -239,7 +231,17 @@ export default function CreateReceiptPage() {
 
   return (
     <div className="min-h-full bg-[#0F1117] rounded-3xl border border-[#252733] shadow-2xl overflow-hidden relative">
+      
+      {/* Background Glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#FF6B4A] rounded-full blur-[150px] opacity-5 pointer-events-none"></div>
+
+      {/* Invisible overlay to close dropdowns when clicking outside */}
+      {openDropdownId && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setOpenDropdownId(null)}
+        />
+      )}
 
       <form onSubmit={handleGenerateReceipt} className="relative z-10 p-4 md:p-8">
         
@@ -337,39 +339,82 @@ export default function CreateReceiptPage() {
                       </button>
                     </div>
                     
-                    {/* 📦 INVENTORY AUTO-FILL DROPDOWN */}
+                    {/* 📦 PREMIUM CUSTOM INVENTORY DROPDOWN */}
                     {inventory.length > 0 && (
-                      <div className="mb-5 bg-[#1C1E28] p-3 rounded-lg border border-[#FF6B4A]/30 shadow-inner">
-                        <Label className={`${labelTheme} !text-[#FF6B4A] flex items-center`}>
+                      <div className="mb-6 relative z-50">
+                        <Label className={`${labelTheme} !text-[#FF6B4A] flex items-center mb-2`}>
                           <Package className="w-3.5 h-3.5 mr-1.5" /> Auto-Fill from Inventory
                         </Label>
-                        <select
-                          className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`}
-                          value={item.product_id || ''}
-                          onChange={(e) => {
-                            const selectedId = e.target.value;
-                            const prod = inventory.find(p => p.id === selectedId);
-                            if (prod) {
-                              updateItem(item.id, 'product_id', prod.id);
-                              updateItem(item.id, 'name', prod.name);
-                              updateItem(item.id, 'price', prod.price);
-                              updateItem(item.id, 'quantity', 1);
-                            } else {
-                              updateItem(item.id, 'product_id', null);
-                            }
-                          }}
+                        
+                        {/* Custom Select Trigger */}
+                        <div 
+                          onClick={() => setOpenDropdownId(openDropdownId === item.id ? null : item.id)}
+                          className={`flex items-center justify-between w-full h-12 px-4 rounded-xl cursor-pointer transition-all ${
+                            openDropdownId === item.id 
+                            ? 'bg-[#1C1E28] border border-[#FF6B4A] shadow-[0_0_15px_rgba(255,107,74,0.15)]' 
+                            : 'bg-[#1C1E28] border border-[#252733] hover:border-[#737490]'
+                          }`}
                         >
-                          <option value="">-- Manual Entry --</option>
-                          {inventory.map(p => (
-                            <option key={p.id} value={p.id}>
-                              {p.name} ({p.stock} in stock) - {business?.currency || '₦'}{p.price.toLocaleString()}
-                            </option>
-                          ))}
-                        </select>
+                          <span className={`truncate mr-4 ${item.product_id ? "text-white font-medium" : "text-[#737490]"}`}>
+                            {item.product_id 
+                              ? `${inventory.find(p => p.id === item.product_id)?.name} - ${business?.currency || '₦'}${inventory.find(p => p.id === item.product_id)?.price?.toLocaleString()}` 
+                              : "-- Manual Entry --"}
+                          </span>
+                          <ChevronDown className={`w-4 h-4 text-[#737490] transition-transform flex-shrink-0 ${openDropdownId === item.id ? 'rotate-180 text-[#FF6B4A]' : ''}`} />
+                        </div>
+
+                        {/* Custom Select Dropdown Menu */}
+                        {openDropdownId === item.id && (
+                          <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-[#1C1E28] border border-[#252733] rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                              
+                              {/* Manual Entry Option */}
+                              <div 
+                                onClick={() => {
+                                  updateItem(item.id, 'product_id', null);
+                                  setOpenDropdownId(null);
+                                }}
+                                className="px-4 py-3 flex items-center justify-between cursor-pointer border-b border-[#252733]/50 transition-colors hover:bg-[#252733] text-[#737490] hover:text-white"
+                              >
+                                <span className="font-medium">-- Manual Entry --</span>
+                                {!item.product_id && <Check className="w-4 h-4 text-[#FF6B4A]" />}
+                              </div>
+
+                              {/* Inventory Product Options */}
+                              {inventory.map(p => (
+                                <div 
+                                  key={p.id}
+                                  onClick={() => {
+                                    updateItem(item.id, 'product_id', p.id);
+                                    updateItem(item.id, 'name', p.name);
+                                    updateItem(item.id, 'price', p.price);
+                                    updateItem(item.id, 'quantity', 1);
+                                    setOpenDropdownId(null); // Close after selection
+                                  }}
+                                  className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors ${
+                                    item.product_id === p.id 
+                                    ? 'bg-[#FF6B4A]/10 text-white' 
+                                    : 'hover:bg-[#252733] text-[#EEEEF5]'
+                                  }`}
+                                >
+                                  <div className="flex flex-col truncate mr-4">
+                                    <span className="font-medium truncate">{p.name}</span>
+                                    <span className="text-xs text-[#737490] mt-0.5">
+                                      {p.stock} in stock • {business?.currency || '₦'}{p.price.toLocaleString()}
+                                    </span>
+                                  </div>
+                                  {item.product_id === p.id && <Check className="w-4 h-4 text-[#FF6B4A] flex-shrink-0" />}
+                                </div>
+                              ))}
+
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                    {/* Basic Item Inputs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 relative z-10">
                       <div className="sm:col-span-6">
                         <Label className={labelTheme}>Item / Device Name <span className="text-[#FB7185]">*</span></Label>
                         <Input 
@@ -378,6 +423,7 @@ export default function CreateReceiptPage() {
                           className={inputTheme} 
                           value={item.name} 
                           onChange={(e) => updateItem(item.id, 'name', e.target.value)} 
+                          disabled={!!item.product_id} // Disable manual input if auto-filled
                         />
                       </div>
                       
@@ -412,7 +458,7 @@ export default function CreateReceiptPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 border-t border-[#252733] pt-4">
+                    <div className="mt-4 border-t border-[#252733] pt-4 relative z-10">
                       <button 
                         type="button" 
                         onClick={() => updateItem(item.id, 'showGadgetMode', !item.showGadgetMode)} 
@@ -425,7 +471,7 @@ export default function CreateReceiptPage() {
                     </div>
 
                     {item.showGadgetMode ? (
-                      <div className="mt-4 p-4 bg-[#1C1E28] border-l-2 border-[#FF6B4A] rounded-r-lg grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-200">
+                      <div className="mt-4 p-4 bg-[#1C1E28] border-l-2 border-[#FF6B4A] rounded-r-lg grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-200 relative z-10">
                         <div className="space-y-1.5">
                           <Label className={labelTheme}>Condition</Label>
                           <select 
@@ -487,7 +533,7 @@ export default function CreateReceiptPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-4 relative">
+                      <div className="mt-4 relative z-10">
                          <Label className={labelTheme}>Serial Number (Optional)</Label>
                          <Input 
                            placeholder="Simple S/N" 
