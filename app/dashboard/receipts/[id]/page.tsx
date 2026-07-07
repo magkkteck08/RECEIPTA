@@ -350,15 +350,9 @@ export default function ReceiptPreview() {
             </div>
             <div className="text-right">
               <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">{docType} No.</p>
-              <div className="flex justify-end items-center gap-2 mt-1">
-                <p className="text-[12px] font-mono font-bold text-white print-text-white">{receipt.receipt_number}</p>
-                
-                <span 
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest print-border print-bg-transparent transition-colors duration-300"
-                  style={{ color: statusBadge.color, backgroundColor: statusBadge.bg, borderColor: statusBadge.border, borderWidth: '1px' }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusBadge.color }}></span> {statusBadge.text}
-                </span>
+              {/* REMOVED BADGE FROM HERE, ADDED break-all FOR LONG NUMBERS */}
+              <div className="mt-1">
+                <p className="text-[12px] font-mono font-bold text-white print-text-white break-all">{receipt.receipt_number}</p>
               </div>
             </div>
             
@@ -388,12 +382,21 @@ export default function ReceiptPreview() {
             
             {resolvedCustomerName && (
                <div className="col-span-2 pt-4 border-t border-white/5 mt-1 print-border flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-[#1C2128] border border-white/10 flex items-center justify-center text-white font-black text-lg shadow-inner print-bg-transparent print-border print-text-gray">
+                 <div className="w-10 h-10 rounded-full bg-[#1C2128] border border-white/10 flex items-center justify-center text-white font-black text-lg shadow-inner print-bg-transparent print-border print-text-gray shrink-0">
                    {resolvedCustomerName.charAt(0).toUpperCase()}
                  </div>
                  <div>
                    <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Billed To</p>
-                   <p className="text-[15px] font-bold text-white mt-0.5 leading-tight print-text-white">{resolvedCustomerName}</p>
+                   {/* ADDED BADGE HERE NEXT TO THE NAME */}
+                   <div className="flex items-center gap-2 mt-0.5">
+                     <p className="text-[15px] font-bold text-white leading-tight print-text-white">{resolvedCustomerName}</p>
+                     <span 
+                       className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest print-border print-bg-transparent transition-colors duration-300 shrink-0"
+                       style={{ color: statusBadge.color, backgroundColor: statusBadge.bg, borderColor: statusBadge.border, borderWidth: '1px' }}
+                     >
+                       <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusBadge.color }}></span> {statusBadge.text}
+                     </span>
+                   </div>
                    {(customer.customer_phone || customer.phone) && (
                      <p className="text-[11px] font-mono font-medium text-[#8B949E] mt-0.5 print-text-gray">{customer.customer_phone || customer.phone}</p>
                    )}
@@ -573,4 +576,3 @@ export default function ReceiptPreview() {
     </div>
   )
 }
-
