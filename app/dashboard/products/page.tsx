@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
-import { Package, Plus, Search, Trash2, Tag, Lock, Layers } from 'lucide-react'
+import { Package, Plus, Search, Trash2, Tag, Lock } from 'lucide-react'
 import Link from 'next/link'
 
 // Shadcn UI Imports
@@ -21,8 +21,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Added 'stock' to the new product state
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: '' })
+  const [newProduct, setNewProduct] = useState({ name: '', price: '' })
 
   useEffect(() => {
     fetchData()
@@ -49,27 +48,25 @@ export default function ProductsPage() {
 
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault()
-    // Validating the new stock field
-    if (!newProduct.name || !newProduct.price || !newProduct.stock) return toast.error("Please fill all fields")
+    
+    if (!newProduct.name || !newProduct.price) return toast.error("Please fill all fields")
 
     setSaving(true)
     try {
       const { data, error } = await supabase.from('products').insert({
         business_id: business.id,
         name: newProduct.name,
-        price: Number(newProduct.price),
-        stock: Number(newProduct.stock) // Pushing stock count to DB
+        price: Number(newProduct.price)
       }).select().single()
 
       if (error) throw error
 
-      toast.success('Product added to inventory! 📦', { 
+      toast.success('Product added to catalog! 📦', { 
         style: { background: '#1C1E28', color: '#FF6B4A', border: '1px solid #252733' } 
       })
       
       setProducts([data, ...products])
-      // Resetting form including stock
-      setNewProduct({ name: '', price: '', stock: '' })
+      setNewProduct({ name: '', price: '' })
     } catch (error: any) {
       toast.error(error.message || "Failed to add product")
     } finally {
@@ -100,7 +97,7 @@ export default function ProductsPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[50vh] text-[#FF6B4A] animate-pulse font-bold tracking-widest text-sm">
-      LOADING INVENTORY...
+      LOADING CATALOG...
     </div>
   )
 
@@ -112,9 +109,9 @@ export default function ProductsPage() {
         <div className="w-20 h-20 bg-[#F4C542]/10 rounded-[2rem] flex items-center justify-center mb-6 border border-[#F4C542]/20 shadow-[0_0_30px_rgba(244,197,66,0.15)] relative z-10">
           <Lock className="w-10 h-10 text-[#F4C542]" />
         </div>
-        <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight relative z-10">Inventory is a Pro Feature</h2>
+        <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight relative z-10">Catalogs are a Pro Feature</h2>
         <p className="text-[#737490] max-w-md mb-8 leading-relaxed relative z-10">
-          Upgrade to Receipta Pro to manage your product inventory, track stock levels, and speed up your receipt generation.
+          Upgrade to Receipta Pro to manage your product catalog, save items, and speed up your receipt generation.
         </p>
         <Link href="/dashboard/settings" className="relative z-10 px-8 py-4 bg-gradient-to-r from-[#F4C542] to-[#F59E0B] text-[#0F1117] font-black rounded-xl hover:opacity-90 transition-all shadow-[0_0_20px_rgba(244,197,66,0.3)]">
           UPGRADE TO PRO
@@ -132,12 +129,7 @@ export default function ProductsPage() {
         <div className="border-b border-[#252733] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-white tracking-tight">Product Catalog</h1>
-            <p className="text-[#737490] mt-1 text-sm font-medium">Manage your items and track available stock levels.</p>
-          </div>
-          
-          <div className="flex items-center gap-2 bg-[#1C1E28] border border-[#252733] px-4 py-2 rounded-xl">
-            <Package className="w-5 h-5 text-[#FF6B4A]" />
-            <span className="text-white font-bold">{products.length} <span className="text-[#737490] font-medium text-sm">Items saved</span></span>
+            <p className="text-[#737490] mt-1 text-sm font-medium">Manage your items and speed up checkout.</p>
           </div>
         </div>
 
@@ -163,18 +155,9 @@ export default function ProductsPage() {
                     <Input required type="number" min="0" placeholder="e.g. 1500000" className={inputTheme} value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} />
                   </div>
                   
-                  {/* NEW STOCK FIELD */}
-                  <div>
-                    <Label className={labelTheme}>Available Stock <span className="text-[#FB7185]">*</span></Label>
-                    <div className="relative">
-                      <Layers className="absolute left-3 top-3.5 w-4 h-4 text-[#737490]" />
-                      <Input required type="number" min="0" placeholder="e.g. 50" className={`${inputTheme} pl-10`} value={newProduct.stock} onChange={e => setNewProduct({...newProduct, stock: e.target.value})} />
-                    </div>
-                  </div>
-                  
                   <Button type="submit" disabled={saving} className="w-full h-12 mt-2 bg-[#FF6B4A] hover:bg-[#E05535] text-white font-bold rounded-xl shadow-[0_0_15px_rgba(255,107,74,0.2)] transition-all">
                     <Plus className="w-4 h-4 mr-2" />
-                    {saving ? 'SAVING...' : 'SAVE TO INVENTORY'}
+                    {saving ? 'SAVING...' : 'SAVE TO CATALOG'}
                   </Button>
                 </form>
               </CardContent>
@@ -186,7 +169,7 @@ export default function ProductsPage() {
             <div className="relative">
               <Search className="absolute left-4 top-3.5 w-5 h-5 text-[#737490]" />
               <Input 
-                placeholder="Search inventory..." 
+                placeholder="Search catalog..." 
                 className="w-full h-12 pl-12 bg-[#1C1E28] border-[#252733] text-white placeholder:text-[#737490] focus-visible:ring-[#FF6B4A] focus-visible:border-[#FF6B4A] rounded-xl shadow-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -213,16 +196,6 @@ export default function ProductsPage() {
                           <div className="flex items-center gap-2 mt-1">
                             <div className="text-sm font-bold text-[#FF6B4A]">
                               {business?.currency || '₦'}{Number(product.price).toLocaleString()}
-                            </div>
-                            <span className="text-[#4b5563] text-[10px]">•</span>
-                            
-                            {/* NEW STOCK BADGE */}
-                            <div className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                              Number(product.stock) > 0 
-                                ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20' 
-                                : 'bg-[#FB7185]/10 text-[#FB7185] border border-[#FB7185]/20'
-                            }`}>
-                              {product.stock || 0} IN STOCK
                             </div>
                           </div>
                         </div>
