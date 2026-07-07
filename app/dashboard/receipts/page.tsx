@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
 import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText } from 'lucide-react'
-
+import { nanoid } from 'nanoid'
 
 // Shadcn Overrides
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
