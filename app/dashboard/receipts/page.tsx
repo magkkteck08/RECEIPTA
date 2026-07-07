@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
 import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText } from 'lucide-react'
-import { nanoid } from 'nanoid'
+
 
 // Shadcn Overrides
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -123,7 +123,7 @@ export default function CreateReceiptPage() {
         receipt_number: receiptNumber,
         verification_code: verificationCode,
         document_type: documentType, 
-        payment_method: documentType === 'Quotation' ? null : paymentMethod,
+        payment_method: paymentMethod,
         customer_name: customer.name || null,
         customer_phone: customer.phone || null,
         customer_email: customer.email || null,
@@ -220,7 +220,7 @@ export default function CreateReceiptPage() {
           </div>
 
           <div className="flex bg-[#1C1E28] p-1.5 rounded-xl border border-[#252733] shadow-inner overflow-x-auto custom-scrollbar">
-            {['Receipt', 'Invoice', 'Quotation'].map(type => (
+            {['Receipt', 'Invoice'].map(type => (
               <button
                 key={type}
                 type="button"
@@ -289,7 +289,7 @@ export default function CreateReceiptPage() {
                   <div className="p-2 bg-[#F4C542]/10 rounded-lg mr-3">
                     <Receipt className="w-5 h-5 text-[#F4C542]" />
                   </div>
-                  {documentType === 'Quotation' ? 'Items to Quote' : documentType === 'Invoice' ? 'Invoice Items' : 'Purchased Items'}
+                  {documentType === 'Invoice' ? 'Invoice Items' : 'Purchased Items'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
@@ -452,25 +452,18 @@ export default function CreateReceiptPage() {
             </Card>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
-                
-                {documentType !== 'Quotation' ? (
-                  <div className="space-y-2">
-                    <Label className={labelTheme}>Payment Method</Label>
-                    <select 
-                      className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} 
-                      value={paymentMethod} 
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    >
-                      <option value="Bank Transfer">Bank Transfer</option>
-                      <option value="Cash">Cash</option>
-                      <option value="POS / Card">POS / Card</option>
-                    </select>
-                  </div>
-                ) : (
-                  <div className="space-y-2 flex flex-col justify-center bg-[#15171F] border border-[#252733] rounded-md px-4 opacity-50">
-                    <span className="text-[#737490] text-xs font-bold uppercase tracking-wider">Payment N/A for Quotation</span>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label className={labelTheme}>Payment Method</Label>
+                  <select 
+                    className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} 
+                    value={paymentMethod} 
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                  >
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cash">Cash</option>
+                    <option value="POS / Card">POS / Card</option>
+                  </select>
+                </div>
                 
                 <div className="space-y-2">
                   <Label className={labelTheme}>Shipping / Delivery Fee</Label>
