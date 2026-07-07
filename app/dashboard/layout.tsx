@@ -44,8 +44,9 @@ export default async function DashboardLayout({
                 {business?.business_name?.charAt(0) || <Store className="w-5 h-5" />}
               </div>
             )}
+            {/* HARDCODED BRAND NAME HERE */}
             <span className="ml-3 font-black text-lg truncate text-white tracking-tight">
-              {business?.business_name || 'Receipta'}
+              Receipta
             </span>
           </div>
           
@@ -114,8 +115,9 @@ export default async function DashboardLayout({
                 {business?.business_name?.charAt(0) || <Store className="w-5 h-5" />}
               </div>
             )}
+            {/* HARDCODED BRAND NAME HERE */}
             <span className="ml-3 font-black text-lg truncate text-white">
-              {business?.business_name || 'Receipta'}
+              Receipta
             </span>
           </div>
           
