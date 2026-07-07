@@ -60,34 +60,37 @@ export default async function DashboardHome() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-10 animate-in fade-in duration-500 pb-10">
       
-      {/* Welcome Header */}
-<div className="border-b border-[#252733] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-  <div>
-    <p className="text-sm font-medium text-[#9CA3AF] tracking-wide uppercase">
-      Welcome back
-    </p>
+      {/* Welcome Header - Centered & Spacious */}
+      <div className="border-b border-[#252733] pb-10 pt-4 flex flex-col items-center justify-center gap-6 text-center">
+        <div>
+          <p className="text-sm font-bold text-[#9CA3AF] tracking-widest uppercase mb-3">
+            Welcome back
+          </p>
 
-    <h1 className="mt-1 text-4xl md:text-5xl font-black leading-none tracking-tight">
-      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C896] to-[#00A67C]">
-        {business?.business_name || 'Vendor'}
-      </span>
-    </h1>
+          <h1 className="text-4xl md:text-6xl font-black leading-none tracking-tight">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C896] to-[#00A67C]">
+              {business?.business_name || 'Vendor'}
+            </span>
+          </h1>
 
-    <p className="mt-3 max-w-2xl text-sm md:text-base text-[#C8CDD8] leading-relaxed">
-      Your business command center—receipts, customers, inventory, expenses, and financial insights in one place.
-    </p>
-  </div>
+          {/* V-Shaped Triangle Subtitle */}
+          <div className="mt-5 text-sm md:text-base text-[#C8CDD8] leading-relaxed flex flex-col items-center justify-center font-medium">
+            <span>Your business command center—receipts, customers,</span>
+            <span>inventory, expenses, and financial</span>
+            <span>insights in one place.</span>
+          </div>
+        </div>
 
-  <Link
-    href="/dashboard/receipts/new"
-    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#00C896] to-[#00A67C] text-[#0F1117] font-bold text-sm shadow-[0_0_15px_rgba(0,200,150,0.3)] hover:shadow-[0_0_25px_rgba(0,200,150,0.5)] transition-all"
-  >
-    <Receipt className="w-4 h-4 mr-2" />
-    New Document
-  </Link>
-</div>
+        <Link
+          href="/dashboard/receipts/new"
+          className="mt-2 inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#00C896] to-[#00A67C] text-[#0F1117] font-bold text-sm shadow-[0_0_20px_rgba(0,200,150,0.2)] hover:shadow-[0_0_30px_rgba(0,200,150,0.4)] hover:-translate-y-0.5 transition-all"
+        >
+          <Receipt className="w-5 h-5 mr-2" />
+          New Document
+        </Link>
+      </div>
 
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
