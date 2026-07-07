@@ -363,7 +363,7 @@ export default function CreateReceiptPage() {
                       </button>
                     </div>
 
-                    {item.showGadgetMode ? (
+                    {item.showGadgetMode && (
                       <div className="mt-4 p-4 bg-[#1C1E28] border-l-2 border-[#FF6B4A] rounded-r-lg grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-200 relative z-10">
                         <div className="space-y-1.5">
                           <Label className={labelTheme}>Condition</Label>
@@ -424,17 +424,6 @@ export default function CreateReceiptPage() {
                             onChange={(e) => updateItem(item.id, 'sn', e.target.value)} 
                           />
                         </div>
-                      </div>
-                    ) : (
-                      <div className="mt-4 relative z-10">
-                         <Label className={labelTheme}>Serial Number (Optional)</Label>
-                         <Input 
-                           placeholder="Simple S/N" 
-                           className={`${inputTheme} pl-8`} 
-                           value={item.serial_number} 
-                           onChange={(e) => updateItem(item.id, 'serial_number', e.target.value)} 
-                         />
-                         <Smartphone className="w-4 h-4 absolute bottom-3 left-3 text-[#737490]" />
                       </div>
                     )}
                   </div>
@@ -539,3 +528,4 @@ export default function CreateReceiptPage() {
     </div>
   )
 }
+
