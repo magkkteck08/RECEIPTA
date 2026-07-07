@@ -63,17 +63,31 @@ export default async function DashboardHome() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       
       {/* Welcome Header */}
-      <div className="border-b border-[#252733] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">
-            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C896] to-[#00A67C]">{business?.business_name || 'Vendor'}</span>
-          </h1>
-          <p className="text-[#EEEEF5] mt-2 text-sm font-medium">Here is your Receipta financial overview.</p>
-        </div>
-        <Link href="/dashboard/receipts/new" className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#00C896] to-[#00A67C] text-[#0F1117] font-bold text-sm shadow-[0_0_15px_rgba(0,200,150,0.3)] hover:shadow-[0_0_25px_rgba(0,200,150,0.5)] transition-all">
-          <Receipt className="w-4 h-4 mr-2" /> New Document
-        </Link>
-      </div>
+<div className="border-b border-[#252733] pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+  <div>
+    <p className="text-sm font-medium text-[#9CA3AF] tracking-wide uppercase">
+      Welcome back
+    </p>
+
+    <h1 className="mt-1 text-4xl md:text-5xl font-black leading-none tracking-tight">
+      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C896] to-[#00A67C]">
+        {business?.business_name || 'Vendor'}
+      </span>
+    </h1>
+
+    <p className="mt-3 max-w-2xl text-sm md:text-base text-[#C8CDD8] leading-relaxed">
+      Your business command center—receipts, customers, inventory, expenses, and financial insights in one place.
+    </p>
+  </div>
+
+  <Link
+    href="/dashboard/receipts/new"
+    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-[#00C896] to-[#00A67C] text-[#0F1117] font-bold text-sm shadow-[0_0_15px_rgba(0,200,150,0.3)] hover:shadow-[0_0_25px_rgba(0,200,150,0.5)] transition-all"
+  >
+    <Receipt className="w-4 h-4 mr-2" />
+    New Document
+  </Link>
+</div>
 
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
