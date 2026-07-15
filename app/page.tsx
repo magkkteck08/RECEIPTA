@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/utils/supabase/client'
 import {
   ArrowRight, Receipt, ShieldCheck, Zap, Store, BarChart3,
@@ -112,10 +113,16 @@ export default function LandingPage() {
       {/* NAVBAR */}
       <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto border-b border-[#252733]/60">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#00C896] to-[#047857] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(0,200,150,0.35)]">
-            <Store className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-black text-white tracking-tight">Receipta</span>
+          <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
+            <Image 
+              src="/logo.png" 
+              alt="Receipta Logo" 
+              width={144}
+              height={40}
+              className="object-contain object-left w-auto h-8 md:h-10"
+              priority
+            />
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm font-bold text-[#737490] hover:text-white transition-colors hidden sm:block">
@@ -315,7 +322,7 @@ export default function LandingPage() {
               <h3 className="text-xl font-black text-white mb-2">Premium</h3>
               <p className="text-[#737490] text-sm mb-6">Unlimited power for power users.</p>
               <div className="mb-8">
-                <span className="text-4xl font-black text-white">#25,000</span>
+                <span className="text-4xl font-black text-white">₦25,000</span>
                 <span className="text-[#737490]"> / year</span>
               </div>
               <div className="space-y-4 mb-8 flex-1">
@@ -393,7 +400,7 @@ export default function LandingPage() {
               <div className="w-2 h-2 bg-[#00C896] rounded-full animate-pulse" />
               <span className="text-xs font-bold tracking-[2px] text-[#00C896] uppercase">Founder Space</span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-10">
               Built by a developer who understands <span className="text-[#00C896]">Nigerian vendors.</span>
             </h2>
           </div>
@@ -448,10 +455,15 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
             <div className="md:col-span-1">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#00C896] to-[#047857] rounded-xl flex items-center justify-center">
-                  <Store className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-black text-white tracking-tight">Receipta</span>
+                <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
+                  <Image 
+                    src="/logo.png" 
+                    alt="Receipta Logo" 
+                    width={128}
+                    height={32}
+                    className="object-contain object-left w-auto h-8"
+                  />
+                </Link>
               </div>
               <p className="text-[#737490] text-sm leading-relaxed mb-6">
                 The professional digital receipt generator built specifically to help modern vendors scale safely.
