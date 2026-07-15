@@ -1,353 +1,152 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { createClient } from '@/utils/supabase/client'
+import React, { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
-  ArrowRight, Receipt, ShieldCheck, Zap, Store, BarChart3,
-  CheckCircle2, Star, Quote, Github, Instagram, Lock, Unlock, Crown, ChevronDown, Mail, X, Search, XCircle, CheckCircle, CreditCard, Calendar, ShoppingBag
-} from 'lucide-react'
-
-// Decorative QR-style grid for the receipt card — not a functional code, just texture.
-const qrPattern = [
-  1, 1, 1, 0, 1,
-  1, 0, 0, 0, 1,
-  1, 1, 0, 1, 0,
-  0, 1, 1, 0, 1,
-  1, 0, 1, 1, 1,
-].map(Boolean)
-
-const lineItems = [
-  ['Wireless Earbuds Pro', '₦24,500'],
-  ['Charging Cable (2m)', '₦3,200'],
-  ['Phone Case — Clear', '₦4,800'],
-]
-
-const faqs = [
-  {
-    question: "How do my customers verify the QR code?",
-    answer: "Every receipt generated on Receipta includes a unique, secure QR code. Your customers or security personnel can simply point their smartphone camera at the code to be redirected to our public verification portal, instantly confirming the receipt's authenticity."
-  },
-  {
-    question: "Can I send these directly to WhatsApp?",
-    answer: "Yes! Once you generate a receipt, you can download it as a high-definition image with one click. From there, you can easily share it directly to your customer's WhatsApp, email, or any other messaging platform."
-  },
-  {
-    question: "What happens if I exceed my Basic plan limit?",
-    answer: "If you hit your 20 receipts per month limit on the Basic plan, you won't be able to generate new ones until the next billing cycle. We recommend upgrading to the Premium Yearly Plan for completely unlimited receipt generation."
-  },
-  {
-    question: "Do my customers need to download the app to view receipts?",
-    answer: "Not at all. Customers receive the receipt as a standard image file. They only interact with our website if they choose to scan the QR code to verify the transaction."
-  }
-]
+  Star, ChevronDown, Instagram, Github, ArrowRight, Mail,
+  ShieldCheck, X, Search, XCircle, CheckCircle, Store,
+  CreditCard, Calendar, Receipt, ShoppingBag, Quote, Check
+} from 'lucide-react';
 
 export default function LandingPage() {
-  // --- VERIFICATION MODAL STATE ---
-  const [isVerifyOpen, setIsVerifyOpen] = useState(false)
-  const [verifyCode, setVerifyCode] = useState('')
-  const [verifyLoading, setVerifyLoading] = useState(false)
-  const [verifyResult, setVerifyResult] = useState<any>(null)
+  const [isVerifyOpen, setIsVerifyOpen] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<any>(null);
 
-  // --- SUPABASE VERIFY FUNCTION ---
   const handleVerifySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!verifyCode.trim()) return
+    e.preventDefault();
+    setVerifyLoading(true);
+    // Simulated verification delay
+    setTimeout(() => {
+      setVerifyLoading(false);
+      if (verifyCode.trim().toUpperCase() === 'RCP-12345') {
+        setVerifyResult({
+          receipt_number: 'RCP-12345',
+          created_at: new Date().toISOString(),
+          grand_total: 125000,
+          businesses: { business_name: 'Premium Gadgets Hub', currency: '₦', logo_url: '' },
+          receipt_items: [
+            { id: 1, item_name: 'Wireless Noise-Cancelling Headphones', quantity: 1, total_price: 125000 }
+          ]
+        });
+      } else {
+        setVerifyResult(false);
+      }
+    }, 1500);
+  };
 
-    setVerifyLoading(true)
-    setVerifyResult(null)
-
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('receipts')
-      .select('*, businesses(*), receipt_items(*)')
-      .eq('verification_code', verifyCode.trim())
-      .single()
-
-    if (data && !error) {
-      setVerifyResult(data)
-    } else {
-      setVerifyResult(false)
-    }
-    
-    setVerifyLoading(false)
-  }
-
-  // Helper to format date if receipt is valid
   const getFormattedDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    })
-  }
+    return new Date(dateString).toLocaleDateString('en-NG', {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
+  };
+
+  const faqs = [
+    {
+      question: "How does Receipta make me look more professional?",
+      answer: "Receipta generates sleek, branded digital receipts that look infinitely better than handwritten notes or WhatsApp messages. It gives your customers confidence that they are dealing with a legitimate, structured business."
+    },
+    {
+      question: "How does the verification portal work?",
+      answer: "Every receipt generated on our platform comes with a unique ID. Customers can enter this ID on our public verification portal to confirm the receipt wasn't forged or altered, completely eliminating payment disputes."
+    },
+    {
+      question: "Can I use my own logo?",
+      answer: "Yes! You can upload your brand logo, set your business colors, and customize the receipt templates to match your brand identity perfectly."
+    },
+    {
+      question: "Is Receipta free to use?",
+      answer: "We offer a generous free tier for new businesses. As you scale, you can upgrade to our Pro Vendor plan for unlimited receipts and advanced branding tools."
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-[#0F1117] text-[#EEEEF5] font-sans selection:bg-[#00C896] selection:text-[#0F1117] overflow-hidden relative">
-
-      {/* Animations & Custom Styles */}
-      <style>{`
-        @keyframes floatMain { 0%,100% { transform: translateY(0) rotate(2deg); } 50% { transform: translateY(-14px) rotate(1deg); } }
-        @keyframes floatGhost { 0%,100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-9px) rotate(-9deg); } }
-        @keyframes floatToast { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes stampPop { 0% { transform: scale(0) rotate(-12deg); opacity:0; } 60% { transform: scale(1.15) rotate(-12deg); opacity:1; } 100% { transform: scale(1) rotate(-12deg); opacity:1; } }
-        @keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
-        
-        .float-main { animation: floatMain 6s ease-in-out infinite; }
-        .float-ghost { animation: floatGhost 7s ease-in-out infinite; }
-        .float-toast { animation: floatToast 5s ease-in-out infinite; }
-        .stamp-pop { animation: stampPop 0.6s 0.9s cubic-bezier(0.34,1.56,0.64,1) both; }
-        .fade-up { animation: fadeUp 0.7s ease-out both; }
-        
-        details > summary { list-style: none; }
-        details > summary::-webkit-details-marker { display: none; }
-        
-        @media (prefers-reduced-motion: reduce) {
-          .float-main, .float-ghost, .float-toast, .stamp-pop, .fade-up { animation: none !important; }
-        }
-      `}</style>
-
-      {/* Background Glow Effects */}
-      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#00C896] rounded-full blur-[250px] opacity-[0.12] pointer-events-none" />
-      <div className="absolute bottom-[15%] right-[-10%] w-[500px] h-[500px] bg-[#047857] rounded-full blur-[250px] opacity-[0.14] pointer-events-none" />
-
+    <div className="min-h-screen bg-[#0F1117] font-sans selection:bg-[#00C896]/30 selection:text-white">
       {/* NAVBAR */}
-      <nav className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto border-b border-[#252733]/60">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="hover:opacity-80 transition-opacity flex items-center">
-            <Image 
-              src="/logo.png" 
-              alt="Receipta Logo" 
-              width={144}
-              height={40}
-              className="object-contain object-left w-auto h-8 md:h-10"
-              priority
-            />
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0F1117]/80 backdrop-blur-md border-b border-[#252733]">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/">
+            <Image src="/logo.png" alt="Receipta Logo" width={128} height={32} className="object-contain w-auto h-8" priority />
           </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-bold text-[#737490] hover:text-white transition-colors hidden sm:block">
-            Sign In
-          </Link>
-          <Link href="/login" className="px-5 py-2.5 bg-[#1C1E28] border border-[#252733] text-white text-sm font-bold rounded-xl hover:border-[#00C896]/50 transition-all flex items-center group">
-            Get Started <ArrowRight className="w-4 h-4 ml-2 text-[#00C896] group-hover:translate-x-1 transition-transform" />
-          </Link>
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="#pricing" className="text-sm font-bold text-[#737490] hover:text-white transition-colors">Pricing</Link>
+            <button onClick={() => setIsVerifyOpen(true)} className="text-sm font-bold text-[#737490] hover:text-white transition-colors">Verify Receipt</button>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="hidden md:block text-sm font-bold text-white hover:text-[#00C896] transition-colors">Login</Link>
+            <Link href="/login" className="bg-[#00C896] text-[#0F1117] text-sm font-black px-6 py-2.5 rounded-xl hover:bg-[#5EEAD4] transition-colors shadow-[0_0_20px_-5px_rgba(0,200,150,0.4)]">
+              Get Started
+            </Link>
+          </div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-28 grid lg:grid-cols-2 gap-16 items-center">
-        {/* Left: copy */}
-        <div className="flex flex-col items-start text-left">
-          <div className="fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#00C896]/10 border border-[#00C896]/20 text-[#00C896] text-xs font-bold uppercase tracking-widest mb-8">
-            <Zap className="w-4 h-4" /> The New Standard for Vendors
+      {/* HERO SECTION */}
+      <section className="relative pt-40 pb-20 px-6 overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#00C896]/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1C1E28] border border-[#252733] mb-8">
+            <span className="w-2 h-2 rounded-full bg-[#00C896] animate-pulse" />
+            <span className="text-xs font-bold text-[#EEEEF5] tracking-wide">Trusted by 10,000+ Nigerian Vendors</span>
           </div>
-
-          <h1 className="fade-up text-5xl md:text-6xl font-black text-white tracking-tighter mb-6 leading-[1.05]" style={{ animationDelay: '0.05s' }}>
-            Build Instant Trust With{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C896] to-[#5EEAD4]">
-              Bank-Grade Receipts.
-            </span>
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-8 leading-[1.1]">
+            Stop losing deals to <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C896] to-[#047857]">unprofessional</span> receipts.
           </h1>
-
-          <p className="fade-up text-[#737490] text-lg max-w-xl mb-10 leading-relaxed" style={{ animationDelay: '0.1s' }}>
-            Create, send, and verify beautiful digital receipts in seconds. Stop losing disputes and start looking like the premium business you are.
+          <p className="text-lg md:text-xl text-[#737490] mb-12 max-w-2xl mx-auto leading-relaxed">
+            Generate verified, beautiful digital receipts in seconds. Build trust, look like a premium brand, and completely eliminate customer payment disputes.
           </p>
-
-          {/* ACTION AREA */}
-          <div className="fade-up w-full max-w-md mb-12" style={{ animationDelay: '0.15s' }}>
-            <div className="flex flex-col gap-3 mb-4">
-              <Link href="/login" className="w-full px-8 py-4 bg-[#00C896] text-[#0F1117] text-base font-black rounded-2xl shadow-[0_0_30px_rgba(0,200,150,0.3)] hover:shadow-[0_0_40px_rgba(0,200,150,0.5)] transition-all flex items-center justify-center hover:-translate-y-1">
-                CREATE FREE ACCOUNT
-              </Link>
-              
-              <Link href="/login" className="w-full px-8 py-4 bg-[#1C1E28] border border-[#252733] text-white text-base font-bold rounded-2xl hover:bg-[#15171F] hover:border-[#737490] transition-all flex items-center justify-center gap-3">
-                Login
-              </Link>
-            </div>
-
-            {/* OPEN MODAL BUTTON */}
-            <button 
-              onClick={() => setIsVerifyOpen(true)}
-              className="w-full px-8 py-4 bg-transparent border border-[#252733] text-[#737490] text-sm font-bold rounded-2xl hover:bg-[#1C1E28] hover:text-white transition-all flex items-center justify-center"
-            >
-              <ShieldCheck className="w-4 h-4 mr-2 text-[#00C896]" /> Verify a Receipt Securely
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/login" className="w-full sm:w-auto flex items-center justify-center px-8 py-4 bg-[#00C896] text-[#0F1117] text-base font-black rounded-2xl hover:bg-[#5EEAD4] transition-all hover:scale-105 shadow-[0_0_30px_-5px_rgba(0,200,150,0.4)]">
+              START FOR FREE <ArrowRight className="w-5 h-5 ml-2" />
+            </Link>
+            <button onClick={() => setIsVerifyOpen(true)} className="w-full sm:w-auto flex items-center justify-center px-8 py-4 bg-[#1C1E28] text-white text-base font-bold rounded-2xl border border-[#252733] hover:bg-[#252733] transition-all">
+              <ShieldCheck className="w-5 h-5 mr-2 text-[#00C896]" /> Verify a Receipt
             </button>
           </div>
-
-          <div className="fade-up flex flex-wrap items-center gap-6 text-[#737490] text-sm font-bold" style={{ animationDelay: '0.2s' }}>
-            <span className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-2 text-[#00C896]" /> Free forever plan</span>
-            <span className="flex items-center"><CheckCircle2 className="w-4 h-4 mr-2 text-[#00C896]" /> Anti-fraud QR codes</span>
-          </div>
         </div>
+      </section>
 
-        {/* Right: floating receipt cluster */}
-        <div className="relative w-full max-w-sm mx-auto h-[440px] lg:h-[480px]">
-          <div className="float-ghost absolute top-6 left-4 right-4 bottom-10 bg-[#15171F] border border-[#252733] rounded-3xl shadow-2xl" />
-          <div className="float-main absolute inset-0 bg-[#1C1E28] border border-[#252733] rounded-3xl p-6 shadow-[0_30px_60px_-15px_rgba(0,200,150,0.25)]">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-gradient-to-br from-[#00C896] to-[#047857] rounded-lg flex items-center justify-center">
-                  <Receipt className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="text-xs font-black text-white tracking-wide">RECEIPTA</span>
-              </div>
-              <span className="text-[10px] text-[#737490] font-mono">#RCP-2049</span>
-            </div>
-            <p className="text-[10px] text-[#737490] mb-4 font-mono">Lagos Tech Hub · Jun 23, 2026</p>
-            <div className="space-y-2.5 mb-4">
-              {lineItems.map(([item, price]) => (
-                <div key={item} className="flex items-center justify-between text-xs">
-                  <span className="text-[#EEEEF5]">{item}</span>
-                  <span className="text-white font-bold">{price}</span>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-[#252733] pt-3 flex items-center justify-between mb-5">
-              <span className="text-xs font-bold text-[#737490] uppercase tracking-wider">Total</span>
-              <span className="text-lg font-black text-[#5EEAD4]">₦32,500</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="grid grid-cols-5 gap-[2px]">
-                {qrPattern.map((on, i) => (
-                  <span key={i} className={`w-1.5 h-1.5 rounded-[1px] ${on ? 'bg-[#00C896]' : 'bg-[#252733]'}`} />
-                ))}
-              </div>
-              <span className="text-[9px] text-[#737490] font-mono">Scan to verify</span>
-            </div>
-          </div>
-          <div className="stamp-pop absolute -top-4 -right-3 bg-[#00C896] text-[#0F1117] text-[10px] font-black px-3 py-1.5 rounded-full shadow-[0_10px_30px_-5px_rgba(0,200,150,0.6)] flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> VERIFIED
-          </div>
-        </div>
-      </main>
-
-      {/* FEATURES GRID */}
-      <section className="relative z-10 border-t border-[#252733]/60 bg-[#0F1117] pt-24 pb-24 px-6">
-        <div className="max-w-7xl mx-auto">
+      {/* PRICING GRID */}
+      <section id="pricing" className="relative z-10 py-24 px-6 bg-[#0F1117]">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-4">Everything you need to scale safely.</h2>
-            <p className="text-[#737490]">Powerful tools designed specifically for modern African businesses.</p>
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Simple, transparent pricing</h2>
+            <p className="text-[#737490]">Start for free, upgrade when you need more power.</p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
-              <div className="w-12 h-12 bg-[#00C896]/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <Receipt className="w-6 h-6 text-[#00C896]" />
-              </div>
-              <h3 className="text-xl font-black text-white mb-3">Smart Invoicing</h3>
-              <p className="text-[#737490] text-sm leading-relaxed">Generate beautiful, branded receipts in seconds. Download as HD images or send directly to customers via WhatsApp.</p>
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-[32px]">
+              <h3 className="text-xl font-bold text-white mb-2">Starter</h3>
+              <div className="text-4xl font-black text-white mb-6">₦0 <span className="text-lg text-[#737490] font-normal">/mo</span></div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center text-[#EEEEF5]"><Check className="w-5 h-5 text-[#00C896] mr-3" /> Up to 50 receipts/month</li>
+                <li className="flex items-center text-[#EEEEF5]"><Check className="w-5 h-5 text-[#00C896] mr-3" /> Basic templates</li>
+                <li className="flex items-center text-[#EEEEF5]"><Check className="w-5 h-5 text-[#00C896] mr-3" /> Standard support</li>
+              </ul>
+              <Link href="/login" className="block w-full py-3 text-center bg-[#15171F] text-white font-bold rounded-xl border border-[#252733] hover:border-[#00C896] transition-colors">Get Starter</Link>
             </div>
-            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
-              <div className="w-12 h-12 bg-[#00C896]/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <BarChart3 className="w-6 h-6 text-[#00C896]" />
-              </div>
-              <h3 className="text-xl font-black text-white mb-3">Sales Analytics</h3>
-              <p className="text-[#737490] text-sm leading-relaxed">Track your revenue, log your expenses, and instantly see your net profit. Make smarter decisions with visual charts.</p>
-            </div>
-            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl hover:border-[#00C896]/50 transition-colors group">
-              <div className="w-12 h-12 bg-[#00C896]/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ShieldCheck className="w-6 h-6 text-[#00C896]" />
-              </div>
-              <h3 className="text-xl font-black text-white mb-3">Anti-Fraud Verification</h3>
-              <p className="text-[#737490] text-sm leading-relaxed">Every receipt gets a unique bank-grade QR code. Customers can scan to verify authenticity on our public portal.</p>
+            <div className="bg-gradient-to-b from-[#1C1E28] to-[#15171F] border border-[#00C896]/30 p-8 rounded-[32px] relative shadow-[0_0_40px_-15px_rgba(0,200,150,0.2)]">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00C896] text-[#0F1117] text-xs font-black px-4 py-1 rounded-full uppercase tracking-widest">Most Popular</div>
+              <h3 className="text-xl font-bold text-white mb-2">Pro Vendor</h3>
+              <div className="text-4xl font-black text-[#00C896] mb-6">₦3,500 <span className="text-lg text-[#737490] font-normal">/mo</span></div>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-center text-[#EEEEF5]"><Check className="w-5 h-5 text-[#00C896] mr-3" /> Unlimited receipts</li>
+                <li className="flex items-center text-[#EEEEF5]"><Check className="w-5 h-5 text-[#00C896] mr-3" /> Custom branding & logos</li>
+                <li className="flex items-center text-[#EEEEF5]"><Check className="w-5 h-5 text-[#00C896] mr-3" /> Priority verification tag</li>
+              </ul>
+              <Link href="/login" className="block w-full py-3 text-center bg-[#00C896] text-[#0F1117] font-bold rounded-xl hover:bg-[#5EEAD4] transition-colors">Upgrade to Pro</Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* PRICING SECTION */}
-      <section className="relative z-10 border-t border-[#252733]/60 bg-[#0F1117] pt-24 pb-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#00C896]/10 border border-[#00C896]/30 mb-6">
-              <Crown className="w-4 h-4 text-[#00C896]" />
-              <span className="text-xs font-bold tracking-[2px] text-[#00C896] uppercase">Level Up Your Business</span>
-            </div>
-            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4">Simple, transparent pricing.</h2>
-            <p className="text-[#737490]">Remove all limits and show your customers you mean business.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Free Tier */}
-            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl flex flex-col">
-              <h3 className="text-xl font-black text-white mb-2">Free</h3>
-              <p className="text-[#737490] text-sm mb-6">Perfect for getting started.</p>
-              <div className="mb-8">
-                <span className="text-4xl font-black text-white">₦0</span>
-                <span className="text-[#737490]"> / forever</span>
-              </div>
-              <div className="space-y-4 mb-8 flex-1">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm">Up to <strong className="text-white">5 receipts</strong> per month.</p>
-                </div>
-                <div className="flex items-start gap-3 opacity-60">
-                  <Lock className="w-5 h-5 text-[#737490] shrink-0 mt-0.5" />
-                  <p className="text-[#737490] text-sm">Dashboard access locked.</p>
-                </div>
-              </div>
-              <Link href="/login" className="w-full py-4 bg-[#15171F] border border-[#252733] text-white text-sm font-bold rounded-xl hover:bg-[#252733] transition-colors text-center">
-                Start Free
-              </Link>
-            </div>
-
-            {/* Basic Tier */}
-            <div className="bg-[#1C1E28] border border-[#252733] p-8 rounded-3xl flex flex-col">
-              <h3 className="text-xl font-black text-white mb-2">Basic</h3>
-              <p className="text-[#737490] text-sm mb-6">For growing daily vendors.</p>
-              <div className="mb-8">
-                <span className="text-4xl font-black text-white">₦17,000</span>
-                <span className="text-[#737490]"> / year</span>
-              </div>
-              <div className="space-y-4 mb-8 flex-1">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm">Up to <strong className="text-white">20 receipts</strong> per month.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Unlock className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm"><strong className="text-white">Unlocked Dashboard:</strong> Access to basic stats and history.</p>
-                </div>
-              </div>
-              <Link href="/login" className="w-full py-4 bg-[#15171F] border border-[#252733] text-white text-sm font-bold rounded-xl hover:bg-[#252733] transition-colors text-center">
-                Choose Basic
-              </Link>
-            </div>
-
-            {/* Premium Tier */}
-            <div className="bg-gradient-to-b from-[#00C896]/10 to-[#1C1E28] border border-[#00C896]/50 p-8 rounded-3xl flex flex-col relative shadow-[0_0_40px_-10px_rgba(0,200,150,0.2)] transform md:-translate-y-4">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00C896] text-[#0F1117] text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
-                Recommended
-              </div>
-              <h3 className="text-xl font-black text-white mb-2">Premium</h3>
-              <p className="text-[#737490] text-sm mb-6">Unlimited power for power users.</p>
-              <div className="mb-8">
-                <span className="text-4xl font-black text-white">₦25,000</span>
-                <span className="text-[#737490]"> / year</span>
-              </div>
-              <div className="space-y-4 mb-8 flex-1">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm"><strong className="text-white">Unlimited receipts</strong> generator.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#00C896] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm"><strong className="text-white">Full App Access:</strong> Unlock Analytics, Items, Clients, and Spend tracking.</p>
-                </div>
-              </div>
-              <Link href="/login" className="w-full py-4 bg-[#00C896] text-[#0F1117] text-sm font-black rounded-xl hover:bg-[#5EEAD4] transition-colors text-center shadow-[0_10px_20px_-5px_rgba(0,200,150,0.3)]">
-                Upgrade to Premium
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIAL */}
-      <section className="relative z-10 py-24 px-6 bg-[#0F1117]">
+      {/* TESTIMONIALS SECTION */}
+      <section className="relative z-10 py-24 px-6 overflow-hidden">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-br from-[#1C1E28] to-[#0F1117] border border-[#252733] p-10 md:p-14 rounded-[40px] relative overflow-hidden">
-            <Quote className="absolute top-8 right-8 w-24 h-24 text-[#252733] opacity-50" />
+          <div className="bg-[#1C1E28]/50 border border-[#252733] rounded-[40px] p-10 md:p-16 relative">
+            <Quote className="absolute top-8 right-10 w-20 h-20 text-[#252733] opacity-50 pointer-events-none" />
+            
             <div className="flex gap-1 mb-6 relative z-10">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star key={star} className="w-5 h-5 fill-[#00C896] text-[#00C896]" />
@@ -407,9 +206,16 @@ export default function LandingPage() {
 
           <div className="bg-[#1C1E28]/80 backdrop-blur-sm border border-[#00C896]/20 rounded-[32px] p-8 md:p-12 shadow-[0_0_60px_-15px_rgba(0,200,150,0.15)] grid md:grid-cols-[auto_1fr] gap-10 items-start">
             <div className="flex md:flex-col items-center md:items-start gap-4 md:gap-5 md:w-44 shrink-0">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-br from-[#00C896] to-[#047857] flex items-center justify-center text-white text-2xl font-black shadow-[0_10px_30px_-5px_rgba(0,200,150,0.4)] shrink-0">
-                IM
-              </div>
+              
+<div className="relative w-20 h-20 md:w-24 md:h-24 rounded-3xl overflow-hidden shadow-[0_10px_30px_-5px_rgba(0,200,150,0.4)] shrink-0 border border-[#00C896]/20">
+  <Image 
+    src="/founder.png" 
+    alt="IdanMagkk" 
+    fill
+    className="object-cover"
+    priority
+  />
+</div>
               <div>
                 <p className="text-white font-black">IdanMagkk</p>
                 <p className="text-[#737490] text-xs font-bold">MAGKK.TECK</p>
