@@ -350,7 +350,6 @@ export default function ReceiptPreview() {
             </div>
             <div className="text-right">
               <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">{docType} No.</p>
-              {/* REMOVED BADGE FROM HERE, ADDED break-all FOR LONG NUMBERS */}
               <div className="mt-1">
                 <p className="text-[12px] font-mono font-bold text-white print-text-white break-all">{receipt.receipt_number}</p>
               </div>
@@ -387,7 +386,6 @@ export default function ReceiptPreview() {
                  </div>
                  <div>
                    <p className="text-[9px] font-black uppercase tracking-widest text-[#8B949E] print-text-gray">Billed To</p>
-                   {/* ADDED BADGE HERE NEXT TO THE NAME */}
                    <div className="flex items-center gap-2 mt-0.5">
                      <p className="text-[15px] font-bold text-white leading-tight print-text-white">{resolvedCustomerName}</p>
                      <span 
@@ -423,6 +421,14 @@ export default function ReceiptPreview() {
                     <td className="py-5 text-sm font-bold text-[#8B949E] align-top w-8 print-text-gray">{item.quantity}</td>
                     <td className="py-5 pr-2">
                       <p className="text-[13px] font-bold text-white leading-tight print-text-white">{item.item_name}</p>
+                      
+                      {/* NEW: Displays IMEI and Serial Numbers directly below the item name */}
+                      {item.serial_number && (
+                        <p className="text-[10px] font-mono text-[#8B949E] mt-1 whitespace-pre-line print-text-gray">
+                          {item.serial_number}
+                        </p>
+                      )}
+
                       {Number(item.quantity) > 1 && (
                         <p className="text-[11px] font-bold text-[#8B949E] mt-1.5 print-text-gray">
                           {item.quantity} x {currency}{Number(Number(item.total_price) / Number(item.quantity)).toLocaleString()}
