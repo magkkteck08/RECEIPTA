@@ -113,9 +113,7 @@ export default function ReceiptPreview() {
     const verifyUrl = `${window.location.origin}/verify/${verifyCode}`
     
     let message = `*${docType} from ${businessName}* 🧾\n\nHello! 👋\n`
-    if (docType === 'Quotation') {
-        message += `Here is the price quotation you requested for *${amount}*.\n\n`
-    } else if (docType === 'Invoice') {
+    if (docType === 'Invoice') {
         message += `Please find the official invoice for *${amount}*.\n\n`
     } else {
         message += `Thank you for your purchase of *${amount}*.\n\n`
@@ -196,14 +194,6 @@ export default function ReceiptPreview() {
       futureDate.setDate(futureDate.getDate() + 7)
       displayFutureDate = futureDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
     }
-  } else if (docType === 'Quotation') {
-    if (receipt.valid_until) {
-      displayFutureDate = new Date(receipt.valid_until).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
-    } else {
-      const futureDate = new Date(rawDate)
-      futureDate.setDate(futureDate.getDate() + 30)
-      displayFutureDate = futureDate.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
-    }
   }
 
   const resolvedCustomerName = customer?.customer_name || customer?.name
@@ -229,12 +219,6 @@ export default function ReceiptPreview() {
       statusBadge = { text: 'CANCELLED', color: '#8B949E', bg: '#8B949E15', border: '#8B949E30' }
     } else {
       statusBadge = { text: 'UNPAID', color: '#F4C542', bg: '#F4C54215', border: '#F4C54230' }
-    }
-  } else if (docType === 'Quotation') {
-    if (currentStatus === 'EXPIRED') {
-      statusBadge = { text: 'EXPIRED', color: '#F87171', bg: '#F8717115', border: '#F8717130' }
-    } else {
-      statusBadge = { text: 'VALID', color: '#60A5FA', bg: '#60A5FA15', border: '#60A5FA30' }
     }
   }
 
@@ -274,7 +258,6 @@ export default function ReceiptPreview() {
           >
             <option value="Receipt">Receipt</option>
             <option value="Invoice">Invoice</option>
-            <option value="Quotation">Quotation</option>
           </select>
 
           <button onClick={handleWhatsApp} className="flex-1 md:flex-none flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#25D366] text-white hover:bg-[#1DA851] transition-all font-black text-sm shadow-[0_0_20px_rgba(37,211,102,0.3)]">
@@ -358,12 +341,6 @@ export default function ReceiptPreview() {
             {docType === 'Invoice' && (
               <div>
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#F4C542] print-text-gray">Due Date</p>
-                <p className="text-[12px] font-bold text-white mt-1 print-text-white">{displayFutureDate}</p>
-              </div>
-            )}
-            {docType === 'Quotation' && (
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#60A5FA] print-text-gray">Valid Until</p>
                 <p className="text-[12px] font-bold text-white mt-1 print-text-white">{displayFutureDate}</p>
               </div>
             )}
