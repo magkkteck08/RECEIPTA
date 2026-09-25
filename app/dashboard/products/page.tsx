@@ -113,7 +113,9 @@ export default function ProductsPage() {
         <p className="text-[#737490] max-w-md mb-8 leading-relaxed relative z-10">
           Upgrade to Receipta Pro to manage your product catalog, save items, and speed up your receipt generation.
         </p>
-        <Link href="/dashboard/settings" className="relative z-10 px-8 py-4 bg-gradient-to-r from-[#F4C542] to-[#F59E0B] text-[#0F1117] font-black rounded-xl hover:opacity-90 transition-all shadow-[0_0_20px_rgba(244,197,66,0.3)]">
+        
+        {/* 🚀 THE FIX: Changed href from /dashboard/settings to /dashboard/upgrade */}
+        <Link href="/dashboard/upgrade" className="relative z-10 px-8 py-4 bg-gradient-to-r from-[#F4C542] to-[#F59E0B] text-[#0F1117] font-black rounded-xl hover:opacity-90 transition-all shadow-[0_0_20px_rgba(244,197,66,0.3)]">
           UPGRADE TO PRO
         </Link>
       </div>

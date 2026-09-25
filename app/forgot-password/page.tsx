@@ -22,16 +22,15 @@ export default function ForgotPasswordPage() {
     setLoading(true)
 
     try {
-      // Initialize Supabase client
       const supabase = createClient()
       
-      // Dynamically grab the current environment URL (localhost or production domain)
+      // Grabs the exact domain (localhost for dev, receipta.cv for production)
       const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        // This is the instruction Supabase needs to route the user correctly
-        redirectTo: `${origin}/update-password`,
-      })
+  // We send them to the callback first, telling it to route them to /update-password afterward
+  redirectTo: `${origin}/auth/callback?next=/update-password`,
+})
 
       if (error) {
         toast.error(error.message)

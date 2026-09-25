@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client'
 import { toast } from 'react-hot-toast'
 import { Receipt, User, Plus, Trash2, Calculator, Save, Smartphone, ChevronDown, ChevronUp, FileText } from 'lucide-react'
 import { nanoid } from 'nanoid'
+import { getPlanLimits } from '@/lib/plan'
 
 // Shadcn Overrides
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,7 +30,7 @@ export default function CreateReceiptPage() {
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer')
   const [shipping, setShipping] = useState<number | string>('')
   
-  // Dynamic Items State (Stripped of product_id)
+  // Dynamic Items State
   const [items, setItems] = useState<any[]>([
     { 
       id: 1, 
@@ -47,7 +48,7 @@ export default function CreateReceiptPage() {
     }
   ])
 
-  // Fetch ONLY Business Data on Load (Saves Database Quota)
+  // Fetch Business Data on Load
   useEffect(() => {
     async function loadDefaults() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -75,20 +76,7 @@ export default function CreateReceiptPage() {
   const addItem = () => {
     setItems([
       ...items, 
-      { 
-        id: Date.now(), 
-        name: '', 
-        serial_number: '', 
-        quantity: 1, 
-        price: '', 
-        showGadgetMode: false, 
-        condition: 'Brand New', 
-        specs: '', 
-        color: '', 
-        imei1: '', 
-        imei2: '', 
-        sn: '' 
-      }
+      { id: Date.now(), name: '', serial_number: '', quantity: 1, price: '', showGadgetMode: false, condition: 'Brand New', specs: '', color: '', imei1: '', imei2: '', sn: '' }
     ])
   }
 
@@ -101,7 +89,7 @@ export default function CreateReceiptPage() {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
 
-  // 🚀 SAVE LOGIC
+  // 🚀 SECURE SAVE LOGIC
   async function handleGenerateReceipt(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -111,13 +99,39 @@ export default function CreateReceiptPage() {
         throw new Error("Please provide an Item Name for all products.")
       }
 
+      // 🛑 1. ENFORCEMENT WALL: Check Plan Limits BEFORE generating
+      const userTier = business?.plan_tier || 'free'
+      const limits = getPlanLimits(userTier)
+
+      if (limits.receiptsLimit !== -1) {
+        if (userTier === 'free') {
+          // Check Lifetime Limit for Free Users
+          const { count } = await supabase
+            .from('receipts')
+            .select('*', { count: 'exact', head: true })
+            .eq('business_id', business.id)
+
+          if (count !== null && count >= limits.receiptsLimit) {
+            toast.error("Starter plan limit reached! Upgrade to create more.", { duration: 4000 })
+            router.push('/dashboard/upgrade')
+            return // Short-circuit the function. No database insert happens.
+          }
+        } else if (userTier === 'basic') {
+          // Check Monthly Limit for Basic Users
+          if ((business.receipts_this_month || 0) >= limits.receiptsLimit) {
+            toast.error("Monthly receipt limit reached! Upgrade to Premium.", { duration: 4000 })
+            router.push('/dashboard/upgrade')
+            return
+          }
+        }
+      }
+
       // Generate secure IDs
       const receiptNumber = `${business.receipt_prefix}-${nanoid(7).toUpperCase()}`
       const verificationCode = `VRF-${nanoid(10).toUpperCase()}`
-
       const isPaid = documentType === 'Receipt' ? grandTotal : 0
 
-      // 1. Insert Document Master Record
+      // 2. Insert Document Master Record
       const { data: receipt, error: receiptError } = await supabase.from('receipts').insert({
         business_id: business.id,
         receipt_number: receiptNumber,
@@ -140,7 +154,7 @@ export default function CreateReceiptPage() {
 
       if (receiptError) throw receiptError
 
-      // 2. Format Line Items
+      // 3. Format & Save Line Items
       const lineItems = items.map(item => {
         let finalItemName = item.name
         let finalSerialNumber = item.serial_number ? `S/N: ${item.serial_number}` : '' 
@@ -150,19 +164,13 @@ export default function CreateReceiptPage() {
           if (item.condition) specsArray.push(item.condition)
           if (item.specs) specsArray.push(item.specs)
           if (item.color) specsArray.push(item.color)
-          
-          if (specsArray.length > 0) {
-            finalItemName = `${item.name} (${specsArray.join(' | ')})`
-          }
+          if (specsArray.length > 0) finalItemName = `${item.name} (${specsArray.join(' | ')})`
 
           const serialArray = []
           if (item.imei1) serialArray.push(`IMEI 1: ${item.imei1}`)
           if (item.imei2) serialArray.push(`IMEI 2: ${item.imei2}`)
           if (item.sn) serialArray.push(`S/N: ${item.sn}`)
-          
-          if (serialArray.length > 0) {
-            finalSerialNumber = serialArray.join('\n') 
-          }
+          if (serialArray.length > 0) finalSerialNumber = serialArray.join('\n') 
         }
 
         return {
@@ -175,9 +183,13 @@ export default function CreateReceiptPage() {
         }
       })
 
-      // 3. Save Line Items to DB
       const { error: itemsError } = await supabase.from('receipt_items').insert(lineItems)
       if (itemsError) throw itemsError
+
+      // 4. Update the monthly receipt tracker for Basic plan users
+      await supabase.from('businesses')
+        .update({ receipts_this_month: (business.receipts_this_month || 0) + 1 })
+        .eq('id', business.id)
 
       toast.success(`${documentType} created!`, { 
         style: { background: '#1C1E28', color: '#00C896' } 
@@ -187,7 +199,6 @@ export default function CreateReceiptPage() {
 
     } catch (error: any) {
       toast.error(error.message)
-    } finally {
       setSaving(false)
     }
   }
@@ -207,8 +218,6 @@ export default function CreateReceiptPage() {
 
   return (
     <div className="min-h-full bg-[#0F1117] rounded-3xl border border-[#252733] shadow-2xl overflow-hidden relative">
-      
-      {/* Background Glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#FF6B4A] rounded-full blur-[150px] opacity-5 pointer-events-none"></div>
 
       <form onSubmit={handleGenerateReceipt} className="relative z-50 p-4 md:p-8">
@@ -241,44 +250,25 @@ export default function CreateReceiptPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           <div className="lg:col-span-2 space-y-8">
-            
             <Card className="bg-[#1C1E28] border-[#252733] shadow-xl overflow-hidden">
               <CardHeader className="bg-[#15171F] border-b border-[#252733] pb-4">
                 <CardTitle className="flex items-center text-white text-lg">
-                  <div className="p-2 bg-[#60A5FA]/10 rounded-lg mr-3">
-                    <User className="w-5 h-5 text-[#60A5FA]" />
-                  </div>
+                  <div className="p-2 bg-[#60A5FA]/10 rounded-lg mr-3"><User className="w-5 h-5 text-[#60A5FA]" /></div>
                   Customer Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2">
                   <Label className={labelTheme}>Customer Name (Optional)</Label>
-                  <Input 
-                    placeholder="e.g. Chioma Obi" 
-                    className={inputTheme} 
-                    value={customer.name} 
-                    onChange={(e) => setCustomer({...customer, name: e.target.value})} 
-                  />
+                  <Input placeholder="e.g. Chioma Obi" className={inputTheme} value={customer.name} onChange={(e) => setCustomer({...customer, name: e.target.value})} />
                 </div>
                 <div>
                   <Label className={labelTheme}>Phone Number</Label>
-                  <Input 
-                    placeholder="090..." 
-                    className={inputTheme} 
-                    value={customer.phone} 
-                    onChange={(e) => setCustomer({...customer, phone: e.target.value})} 
-                  />
+                  <Input placeholder="090..." className={inputTheme} value={customer.phone} onChange={(e) => setCustomer({...customer, phone: e.target.value})} />
                 </div>
                 <div>
                   <Label className={labelTheme}>Email Address</Label>
-                  <Input 
-                    type="email" 
-                    placeholder="client@email.com" 
-                    className={inputTheme} 
-                    value={customer.email} 
-                    onChange={(e) => setCustomer({...customer, email: e.target.value})} 
-                  />
+                  <Input type="email" placeholder="client@email.com" className={inputTheme} value={customer.email} onChange={(e) => setCustomer({...customer, email: e.target.value})} />
                 </div>
               </CardContent>
             </Card>
@@ -286,77 +276,42 @@ export default function CreateReceiptPage() {
             <Card className="bg-[#1C1E28] border-[#252733] shadow-xl overflow-hidden">
               <CardHeader className="bg-[#15171F] border-b border-[#252733] pb-4 flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center text-white text-lg">
-                  <div className="p-2 bg-[#F4C542]/10 rounded-lg mr-3">
-                    <Receipt className="w-5 h-5 text-[#F4C542]" />
-                  </div>
+                  <div className="p-2 bg-[#F4C542]/10 rounded-lg mr-3"><Receipt className="w-5 h-5 text-[#F4C542]" /></div>
                   {documentType === 'Invoice' ? 'Invoice Items' : 'Purchased Items'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                
-                {items.map((item, index) => (
+                {items.map((item) => (
                   <div key={item.id} className="p-5 bg-[#15171F] border border-[#252733] rounded-xl relative group transition-all">
-                    
                     <div className="absolute -top-3 -right-3 z-10">
-                      <button 
-                        type="button" 
-                        onClick={() => removeItem(item.id)} 
-                        className="bg-[#1C1E28] border border-[#252733] text-[#FB7185] p-2 rounded-full hover:bg-[#FB7185] hover:text-white transition-all shadow-lg"
-                      >
+                      <button type="button" onClick={() => removeItem(item.id)} className="bg-[#1C1E28] border border-[#252733] text-[#FB7185] p-2 rounded-full hover:bg-[#FB7185] hover:text-white transition-all shadow-lg">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
-                    {/* Basic Item Inputs - Completely Manual */}
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 relative z-10">
                       <div className="sm:col-span-6">
                         <Label className={labelTheme}>Item / Device Name <span className="text-[#FB7185]">*</span></Label>
-                        <Input 
-                          required 
-                          placeholder="e.g. MacBook Pro M2" 
-                          className={inputTheme} 
-                          value={item.name} 
-                          onChange={(e) => updateItem(item.id, 'name', e.target.value)} 
-                        />
+                        <Input required placeholder="e.g. MacBook Pro M2" className={inputTheme} value={item.name} onChange={(e) => updateItem(item.id, 'name', e.target.value)} />
                       </div>
-                      
                       <div className="sm:col-span-2">
                         <Label className={labelTheme}>Qty <span className="text-[#FB7185]">*</span></Label>
-                        <Input 
-                          required 
-                          type="text" 
-                          inputMode="numeric"
-                          className={inputTheme} 
-                          value={item.quantity === '' ? '' : item.quantity} 
-                          onChange={(e) => {
-                            const rawNumericText = e.target.value.replace(/[^0-9]/g, '')
-                            updateItem(item.id, 'quantity', rawNumericText === '' ? '' : Number(rawNumericText))
-                          }} 
-                        />
+                        <Input required type="text" inputMode="numeric" className={inputTheme} value={item.quantity === '' ? '' : item.quantity} onChange={(e) => {
+                          const rawNumericText = e.target.value.replace(/[^0-9]/g, '')
+                          updateItem(item.id, 'quantity', rawNumericText === '' ? '' : Number(rawNumericText))
+                        }} />
                       </div>
-
                       <div className="sm:col-span-4">
                         <Label className={labelTheme}>Unit Price ({business?.currency || '₦'}) (Optional)</Label>
-                        <Input 
-                          type="text" 
-                          inputMode="numeric"
-                          placeholder="e.g. 150,000"
-                          className={`${inputTheme} font-mono font-bold`} 
-                          value={item.price === '' || item.price === 0 ? '' : Number(item.price).toLocaleString('en-US')} 
-                          onChange={(e) => {
-                            const rawNumericText = e.target.value.replace(/[^0-9]/g, '')
-                            updateItem(item.id, 'price', rawNumericText === '' ? '' : Number(rawNumericText))
-                          }} 
-                        />
+                        <Input type="text" inputMode="numeric" placeholder="e.g. 150,000" className={`${inputTheme} font-mono font-bold`} value={item.price === '' || item.price === 0 ? '' : Number(item.price).toLocaleString('en-US')} onChange={(e) => {
+                          const rawNumericText = e.target.value.replace(/[^0-9]/g, '')
+                          updateItem(item.id, 'price', rawNumericText === '' ? '' : Number(rawNumericText))
+                        }} />
                       </div>
                     </div>
 
                     <div className="mt-4 border-t border-[#252733] pt-4 relative z-10">
-                      <button 
-                        type="button" 
-                        onClick={() => updateItem(item.id, 'showGadgetMode', !item.showGadgetMode)} 
-                        className={`text-xs font-bold flex items-center transition-colors ${item.showGadgetMode ? 'text-[#FF6B4A]' : 'text-[#737490] hover:text-white'}`}
-                      >
+                      <button type="button" onClick={() => updateItem(item.id, 'showGadgetMode', !item.showGadgetMode)} className={`text-xs font-bold flex items-center transition-colors ${item.showGadgetMode ? 'text-[#FF6B4A]' : 'text-[#737490] hover:text-white'}`}>
                         <Smartphone className="w-4 h-4 mr-1.5" /> 
                         {item.showGadgetMode ? 'Hide Gadget Specs' : 'Add Gadget Specs (Phones, Laptops)'}
                         {item.showGadgetMode ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
@@ -367,11 +322,7 @@ export default function CreateReceiptPage() {
                       <div className="mt-4 p-4 bg-[#1C1E28] border-l-2 border-[#FF6B4A] rounded-r-lg grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-200 relative z-10">
                         <div className="space-y-1.5">
                           <Label className={labelTheme}>Condition</Label>
-                          <select 
-                            className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} 
-                            value={item.condition} 
-                            onChange={(e) => updateItem(item.id, 'condition', e.target.value)}
-                          >
+                          <select className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} value={item.condition} onChange={(e) => updateItem(item.id, 'condition', e.target.value)}>
                             <option value="Brand New">Brand New</option>
                             <option value="UK Used">UK Used</option>
                             <option value="Nigerian Used">Nigerian Used</option>
@@ -379,62 +330,17 @@ export default function CreateReceiptPage() {
                             <option value="Open Box">Open Box</option>
                           </select>
                         </div>
-                        <div className="space-y-1.5">
-                          <Label className={labelTheme}>Specs (RAM/ROM)</Label>
-                          <Input 
-                            placeholder="e.g. 16GB / 512GB" 
-                            className={inputTheme} 
-                            value={item.specs} 
-                            onChange={(e) => updateItem(item.id, 'specs', e.target.value)} 
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className={labelTheme}>Color</Label>
-                          <Input 
-                            placeholder="e.g. Space Gray" 
-                            className={inputTheme} 
-                            value={item.color} 
-                            onChange={(e) => updateItem(item.id, 'color', e.target.value)} 
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className={labelTheme}>IMEI 1</Label>
-                          <Input 
-                            placeholder="15-digit code..." 
-                            className={inputTheme} 
-                            value={item.imei1} 
-                            onChange={(e) => updateItem(item.id, 'imei1', e.target.value)} 
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className={labelTheme}>IMEI 2 (Optional)</Label>
-                          <Input 
-                            placeholder="15-digit code..." 
-                            className={inputTheme} 
-                            value={item.imei2} 
-                            onChange={(e) => updateItem(item.id, 'imei2', e.target.value)} 
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className={labelTheme}>Serial Number (S/N)</Label>
-                          <Input 
-                            placeholder="Alphanumeric S/N..." 
-                            className={inputTheme} 
-                            value={item.sn} 
-                            onChange={(e) => updateItem(item.id, 'sn', e.target.value)} 
-                          />
-                        </div>
+                        <div className="space-y-1.5"><Label className={labelTheme}>Specs (RAM/ROM)</Label><Input placeholder="e.g. 16GB / 512GB" className={inputTheme} value={item.specs} onChange={(e) => updateItem(item.id, 'specs', e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label className={labelTheme}>Color</Label><Input placeholder="e.g. Space Gray" className={inputTheme} value={item.color} onChange={(e) => updateItem(item.id, 'color', e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label className={labelTheme}>IMEI 1</Label><Input placeholder="15-digit code..." className={inputTheme} value={item.imei1} onChange={(e) => updateItem(item.id, 'imei1', e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label className={labelTheme}>IMEI 2 (Optional)</Label><Input placeholder="15-digit code..." className={inputTheme} value={item.imei2} onChange={(e) => updateItem(item.id, 'imei2', e.target.value)} /></div>
+                        <div className="space-y-1.5"><Label className={labelTheme}>Serial Number (S/N)</Label><Input placeholder="Alphanumeric S/N..." className={inputTheme} value={item.sn} onChange={(e) => updateItem(item.id, 'sn', e.target.value)} /></div>
                       </div>
                     )}
                   </div>
                 ))}
                 
-                <Button 
-                  type="button" 
-                  onClick={addItem} 
-                  variant="outline" 
-                  className="w-full mt-2 border-dashed border-[#252733] bg-transparent text-[#FF6B4A] hover:bg-[#FF6B4A]/10 hover:border-[#FF6B4A] h-12 rounded-xl"
-                >
+                <Button type="button" onClick={addItem} variant="outline" className="w-full mt-2 border-dashed border-[#252733] bg-transparent text-[#FF6B4A] hover:bg-[#FF6B4A]/10 hover:border-[#FF6B4A] h-12 rounded-xl">
                   <Plus className="w-4 h-4 mr-2" /> ADD ANOTHER ITEM
                 </Button>
               </CardContent>
@@ -443,11 +349,7 @@ export default function CreateReceiptPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 relative z-10">
                 <div className="space-y-2">
                   <Label className={labelTheme}>Payment Method</Label>
-                  <select 
-                    className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} 
-                    value={paymentMethod} 
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                  >
+                  <select className={`flex h-10 w-full rounded-md px-3 py-2 text-sm appearance-none ${inputTheme}`} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="Cash">Cash</option>
                     <option value="POS / Card">POS / Card</option>
@@ -456,12 +358,7 @@ export default function CreateReceiptPage() {
                 
                 <div className="space-y-2">
                   <Label className={labelTheme}>Shipping / Delivery Fee</Label>
-                  <Input 
-                    type="text" 
-                    inputMode="numeric" 
-                    className={`${inputTheme} font-mono font-bold`} 
-                    value={shipping === '' ? '' : Number(shipping).toLocaleString('en-US')} 
-                    onChange={(e) => { 
+                  <Input type="text" inputMode="numeric" className={`${inputTheme} font-mono font-bold`} value={shipping === '' ? '' : Number(shipping).toLocaleString('en-US')} onChange={(e) => { 
                       const rawNumericText = e.target.value.replace(/[^0-9]/g, ''); 
                       setShipping(rawNumericText === '' ? '' : Number(rawNumericText)) 
                     }} 
@@ -474,50 +371,21 @@ export default function CreateReceiptPage() {
             <div className="sticky top-8">
               <Card className="bg-[#1C1E28] border-[#252733] shadow-2xl overflow-hidden">
                 <CardHeader className="bg-gradient-to-br from-[#FF6B4A]/10 to-transparent border-b border-[#252733] pb-4">
-                  <CardTitle className="flex items-center text-white text-lg">
-                    <Calculator className="w-5 h-5 text-[#FF6B4A] mr-3" /> 
-                    Live Summary
-                  </CardTitle>
+                  <CardTitle className="flex items-center text-white text-lg"><Calculator className="w-5 h-5 text-[#FF6B4A] mr-3" /> Live Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
+                  <div className="flex justify-between text-[#EEEEF5] text-sm"><span>Subtotal</span><span className="text-white font-medium">{business?.currency || '₦'}{subtotal.toLocaleString()}</span></div>
+                  <div className="flex justify-between text-[#EEEEF5] text-sm"><span>Tax ({taxRate}%)</span><span className="text-[#FB7185] font-medium">+{business?.currency || '₦'}{taxAmount.toLocaleString()}</span></div>
+                  <div className="flex justify-between text-[#EEEEF5] text-sm"><span>Discount ({discountRate}%)</span><span className="text-[#FF6B4A] font-medium">-{business?.currency || '₦'}{discountAmount.toLocaleString()}</span></div>
+                  <div className="flex justify-between text-[#EEEEF5] text-sm pb-4 border-b border-[#252733]"><span>Shipping</span><span className="text-white font-medium">+{business?.currency || '₦'}{(Number(shipping) || 0).toLocaleString()}</span></div>
+                  <div className="flex justify-between items-end pt-2"><span className="text-white font-bold text-lg">Grand Total</span><span className="text-3xl font-black text-[#FF6B4A]">{business?.currency || '₦'}{grandTotal.toLocaleString()}</span></div>
                   
-                  <div className="flex justify-between text-[#EEEEF5] text-sm">
-                    <span>Subtotal</span>
-                    <span className="text-white font-medium">{business?.currency || '₦'}{subtotal.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-[#EEEEF5] text-sm">
-                    <span>Tax ({taxRate}%)</span>
-                    <span className="text-[#FB7185] font-medium">+{business?.currency || '₦'}{taxAmount.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-[#EEEEF5] text-sm">
-                    <span>Discount ({discountRate}%)</span>
-                    <span className="text-[#FF6B4A] font-medium">-{business?.currency || '₦'}{discountAmount.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-[#EEEEF5] text-sm pb-4 border-b border-[#252733]">
-                    <span>Shipping</span>
-                    <span className="text-white font-medium">+{business?.currency || '₦'}{(Number(shipping) || 0).toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-end pt-2">
-                    <span className="text-white font-bold text-lg">Grand Total</span>
-                    <span className="text-3xl font-black text-[#FF6B4A]">{business?.currency || '₦'}{grandTotal.toLocaleString()}</span>
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    disabled={saving} 
-                    className="w-full h-14 mt-6 bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] hover:from-[#E05535] hover:to-[#10B981] font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(110,231,183,0.2)] hover:shadow-[0_0_30px_rgba(110,231,183,0.4)] transition-all uppercase tracking-tight"
-                  >
+                  <Button type="submit" disabled={saving} className="w-full h-14 mt-6 bg-gradient-to-r from-[#FF6B4A] to-[#E05535] text-[#0F1117] hover:from-[#E05535] hover:to-[#10B981] font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(110,231,183,0.2)] hover:shadow-[0_0_30px_rgba(110,231,183,0.4)] transition-all uppercase tracking-tight">
                     <Save className="w-5 h-5 mr-2" /> 
                     {saving ? 'GENERATING...' : `ISSUE ${documentType}`}
                   </Button>
                   
-                  <p className="text-center text-[10px] text-[#737490] uppercase tracking-widest mt-4">
-                    Secure 256-bit encryption
-                  </p>
+                  <p className="text-center text-[10px] text-[#737490] uppercase tracking-widest mt-4">Secure 256-bit encryption</p>
                 </CardContent>
               </Card>
             </div>
@@ -528,4 +396,3 @@ export default function CreateReceiptPage() {
     </div>
   )
 }
-

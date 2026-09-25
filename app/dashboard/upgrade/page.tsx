@@ -1,104 +1,139 @@
 'use client'
 
-import { CheckCircle2, Crown, ShieldCheck, Zap, ArrowRight, MessageCircle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from 'react'
+import { CheckCircle2, Crown, Zap, ShieldCheck } from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { createSubscriptionCheckout } from '@/app/actions/billing'
 
 export default function UpgradePage() {
-  // Replace this with your actual WhatsApp number (include country code, no +)
-  const whatsappNumber = "2348000000000" 
-  const whatsappMessage = "Hello Receipta! I just paid ₦12,000 for the Premium Yearly Plan. Here is my payment receipt to upgrade my account:"
-  const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
 
   return (
-    <div className="min-h-full bg-[#0F1117] rounded-3xl border border-[#252733] shadow-2xl relative overflow-hidden pb-10 flex flex-col items-center justify-center p-6">
+    <div className="min-h-full bg-[#0F1117] rounded-3xl border border-[#252733] shadow-2xl relative overflow-hidden pb-10 flex flex-col items-center p-6 font-sans">
       
-      {/* Ambient Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#FF6B4A] rounded-full blur-[200px] opacity-10 pointer-events-none"></div>
+      {/* Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#00C896] rounded-full blur-[250px] opacity-10 pointer-events-none"></div>
 
-      <div className="relative z-10 max-w-2xl w-full space-y-8 text-center mt-8">
+      <div className="relative z-10 max-w-5xl w-full space-y-10 text-center mt-8">
         
         {/* Header */}
         <div>
-          <div className="inline-flex items-center justify-center p-3 bg-[#F4C542]/10 rounded-2xl mb-4 border border-[#F4C542]/20 shadow-lg">
-            <Crown className="w-8 h-8 text-[#F4C542]" />
+          <div className="inline-flex items-center justify-center p-3 bg-[#00C896]/10 rounded-2xl mb-4 border border-[#00C896]/20 shadow-lg">
+            <Crown className="w-8 h-8 text-[#00C896]" />
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
             Level Up Your Business
           </h1>
           <p className="text-[#737490] text-base md:text-lg max-w-xl mx-auto">
-            Remove all limits, unlock the smart CRM, and show your customers you mean business.
+            Remove all limits, unlock the smart CRM, and automate your workflow.
           </p>
         </div>
 
-        {/* Pricing Card */}
-        <Card className="bg-[#1C1E28] border-[#FF6B4A]/50 shadow-[0_0_50px_rgba(255,107,74,0.1)] overflow-hidden text-left relative">
-          {/* Top Banner */}
-          <div className="bg-gradient-to-r from-[#FF6B4A] to-[#E05535] py-2 px-6 text-center">
-            <span className="text-white text-xs font-black tracking-widest uppercase">Premium Yearly Plan</span>
-          </div>
+        {/* Monthly / Yearly Toggle */}
+        <div className="flex items-center justify-center gap-4 bg-[#1C1E28] p-1.5 rounded-full w-fit mx-auto border border-[#252733]">
+          <button 
+            onClick={() => setBillingCycle('monthly')}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${billingCycle === 'monthly' ? 'bg-[#252733] text-white shadow-md' : 'text-[#737490] hover:text-white'}`}
+          >
+            Monthly
+          </button>
+          <button 
+            onClick={() => setBillingCycle('yearly')}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-[#00C896] text-white shadow-[0_0_15px_rgba(0,200,150,0.3)]' : 'text-[#737490] hover:text-white'}`}
+          >
+            Yearly <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full">SAVE 20%</span>
+          </button>
+        </div>
 
-          <CardContent className="p-8 md:p-10 flex flex-col md:flex-row gap-10 items-center">
-            
-            {/* Left Side: Price & Features */}
-            <div className="flex-1 space-y-6 w-full">
-              <div>
-                <span className="text-5xl font-black text-white">₦12,000</span>
-                <span className="text-[#737490] font-medium ml-2">/ year</span>
-                <p className="text-xs text-[#FF6B4A] font-bold mt-2 bg-[#FF6B4A]/10 w-fit px-3 py-1 rounded-full border border-[#FF6B4A]/20">
-                  Just ₦1,000 per month!
-                </p>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t border-[#252733]">
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#34D399] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm"><b>Unlimited Receipts:</b> Never worry about monthly limits again.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#34D399] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm"><b>Smart CRM Directory:</b> Auto-save and track every customer.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#34D399] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm"><b>Gadget Mode Unlocked:</b> Full access to IMEI & Serial tracking.</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-[#34D399] shrink-0 mt-0.5" />
-                  <p className="text-[#EEEEF5] text-sm"><b>Priority Support:</b> Direct line to the Receipta admin team.</p>
+        {/* Pricing Cards Container */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+          
+          {/* BASIC PLAN */}
+          <Card className="bg-[#1C1E28] border-[#252733] shadow-xl relative overflow-hidden flex flex-col">
+            <CardContent className="p-8 flex flex-col h-full">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-white mb-2">Growing Business</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-white">
+                    {billingCycle === 'yearly' ? '₦22,000' : '₦1,800'}
+                  </span>
+                  <span className="text-[#737490] font-medium">/{billingCycle === 'yearly' ? 'year' : 'month'}</span>
                 </div>
               </div>
-            </div>
 
-            {/* Right Side: Payment Instructions */}
-            <div className="flex-1 w-full bg-[#15171F] p-6 rounded-2xl border border-[#252733] text-center">
-              <ShieldCheck className="w-8 h-8 text-[#737490] mx-auto mb-3" />
-              <h3 className="text-white font-bold mb-2">How to Upgrade</h3>
-              
-              {/* Bank Details */}
-              <div className="bg-[#0F1117] p-4 rounded-xl border border-[#252733] mb-4 text-left">
-                <p className="text-xs text-[#737490] uppercase tracking-wider mb-1">Pay To:</p>
-                <p className="text-white font-bold text-lg tracking-widest">9073754047</p>
-                <p className="text-[#EEEEF5] text-sm mt-1">Receipta Technologies</p>
-                <p className="text-[#737490] text-xs mt-0.5">PayCom</p>
+              <div className="space-y-4 flex-grow mb-8 border-t border-[#252733] pt-6">
+                <FeatureItem text="Up to 100 Receipts / month" />
+                <FeatureItem text="Up to 200 Customers & 100 Items" />
+                <FeatureItem text="Upload Custom Logo & Signature" />
+                <FeatureItem text="Remove Receipta Watermark" />
+                <FeatureItem text="Unlock Expense Tracking" missing />
+                <FeatureItem text="Advanced Analytics Dashboard" missing />
               </div>
 
-              <p className="text-[11px] text-[#737490] mb-4 leading-relaxed">
-                Make your ₦12,000 transfer to the account above, then click the button below to send your proof of payment on WhatsApp for instant activation.
-              </p>
-
-              <a href={waLink} target="_blank" rel="noopener noreferrer" className="block w-full">
-                <Button className="w-full h-12 bg-[#25D366] hover:bg-[#1DA851] text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center">
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  I'VE PAID - ACTIVATE ME
+              <form action={createSubscriptionCheckout} className="w-full mt-auto">
+                <input type="hidden" name="plan" value="basic" />
+                <input type="hidden" name="cycle" value={billingCycle} />
+                <Button type="submit" variant="outline" className="w-full h-12 bg-[#15171F] border border-[#252733] text-white hover:bg-[#252733] font-bold rounded-xl transition-all">
+                  START BASIC
                 </Button>
-              </a>
-            </div>
+              </form>
+            </CardContent>
+          </Card>
 
-          </CardContent>
-        </Card>
+          {/* PREMIUM PLAN */}
+          <Card className="bg-[#1C1E28] border-[#00C896]/50 shadow-[0_0_30px_rgba(0,200,150,0.15)] relative overflow-hidden flex flex-col transform md:-translate-y-4">
+            <div className="bg-gradient-to-r from-[#00C896] to-[#00A67C] py-1.5 px-6 text-center">
+              <span className="text-white text-xs font-black tracking-widest uppercase">Most Popular</span>
+            </div>
+            
+            <CardContent className="p-8 flex flex-col h-full">
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-[#00C896] mb-2">Serious Business</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-white">
+                    {billingCycle === 'yearly' ? '₦30,000' : '₦2,500'}
+                  </span>
+                  <span className="text-[#737490] font-medium">/{billingCycle === 'yearly' ? 'year' : 'month'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-4 flex-grow mb-8 border-t border-[#252733] pt-6">
+                <FeatureItem text="Unlimited Digital Receipts" />
+                <FeatureItem text="Unlimited Customers & Items" />
+                <FeatureItem text="Upload Custom Logo & Signature" />
+                <FeatureItem text="Unlock Sidebar App: Expenses" />
+                <FeatureItem text="Advanced Analytics Dashboard" />
+                <FeatureItem text="Priority WhatsApp Support" />
+              </div>
+
+              <form action={createSubscriptionCheckout} className="w-full mt-auto">
+                <input type="hidden" name="plan" value="premium" />
+                <input type="hidden" name="cycle" value={billingCycle} />
+                <Button type="submit" className="w-full h-12 bg-gradient-to-r from-[#00C896] to-[#00A67C] hover:shadow-[0_0_20px_rgba(0,200,150,0.4)] text-white font-bold rounded-xl transition-all border-0 flex items-center justify-center">
+                  <Zap className="w-5 h-5 mr-2" />
+                  UPGRADE TO PREMIUM
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+        </div>
+
+        <div className="mt-8 flex items-center justify-center gap-2 text-[#737490] text-xs font-bold uppercase tracking-widest opacity-60">
+          <ShieldCheck className="w-4 h-4" /> Secured Automated Billing via Bachs
+        </div>
 
       </div>
+    </div>
+  )
+}
+
+function FeatureItem({ text, missing = false }: { text: string, missing?: boolean }) {
+  return (
+    <div className={`flex items-start gap-3 ${missing ? 'opacity-40' : ''}`}>
+      <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${missing ? 'text-[#737490]' : 'text-[#00C896]'}`} />
+      <p className="text-[#EEEEF5] text-sm font-medium">{text}</p>
     </div>
   )
 }
