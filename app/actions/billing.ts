@@ -17,10 +17,10 @@ export async function createSubscriptionCheckout(formData: FormData) {
 
   // 🚨 TRAP 2: Ensure these IDs are from your LIVE Bachs Dashboard, not Sandbox!
   let productId = ''
-  if (plan === 'premium' && cycle === 'yearly') productId = 'prod_caf5a18dd91741c599fe'
-  else if (plan === 'premium' && cycle === 'monthly') productId = 'prod_2e40940594624c7298f9'
-  else if (plan === 'basic' && cycle === 'yearly') productId = 'prod_6ae585b993554a67902d'
-  else if (plan === 'basic' && cycle === 'monthly') productId = 'prod_e235736d41034d16b007'
+  if (plan === 'premium' && cycle === 'yearly') productId = 'prod_1e2dab64d92243549e35'
+  else if (plan === 'premium' && cycle === 'monthly') productId = 'prod_469cce424bfa4021b8d3'
+  else if (plan === 'basic' && cycle === 'yearly') productId = 'prod_43740e0d70094bfa8c37'
+  else if (plan === 'basic' && cycle === 'monthly') productId = 'prod_efeee18c4d6b4f4fbfcc'
 
   if (!productId) {
     redirect('/dashboard/upgrade?message=Invalid plan selected')
