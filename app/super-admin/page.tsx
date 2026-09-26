@@ -1,60 +1,17 @@
 export const dynamic = 'force-dynamic'
 
-import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/utils/supabase/server'
-import { Activity, Users, FileText, Wallet, ShieldAlert, LogOut, ArrowLeft } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ShieldAlert, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { handleLogin } from './actions'
+import ClientDashboard from './ClientDashboard'
 
-// ==========================================
-// 1. SERVER ACTIONS
-// ==========================================
-async function handleLogin(formData: FormData) {
-  'use server'
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  
-  const founderEmail = process.env.NEXT_PUBLIC_FOUNDER_EMAIL?.toLowerCase() || 'MISSING_IN_VERCEL'
-
-  const supabase = await createServerClient()
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-
-  if (error) {
-    redirect('/super-admin?error=Invalid admin credentials')
-  }
-  
-  if (email.toLowerCase() !== founderEmail) {
-    await supabase.auth.signOut() 
-    redirect(`/super-admin?error=Mismatch! You typed: [${email}] but Vercel has: [${founderEmail}]`)
-  }
-
-  redirect('/super-admin')
-}
-
-async function handleLogout() {
-  'use server'
-  const supabase = await createServerClient()
-  await supabase.auth.signOut()
-  redirect('/super-admin')
-}
-
-// ==========================================
-// 2. MAIN COMPONENT
-// ==========================================
-export default async function SuperAdminDashboard({ 
-  searchParams 
-}: { 
-  searchParams: Promise<{ error?: string }> 
-}) {
+export default async function SuperAdminDashboard({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams;
 
   const supabaseAuth = await createServerClient()
   const { data: { user } } = await supabaseAuth.auth.getUser()
-
   const FOUNDER_EMAIL = process.env.NEXT_PUBLIC_FOUNDER_EMAIL?.toLowerCase()
 
   // ==========================================
@@ -75,37 +32,20 @@ export default async function SuperAdminDashboard({
           </div>
 
           <form action={handleLogin} className="bg-[#11141B] border border-[#232838] p-8 rounded-[2rem] shadow-2xl space-y-5">
-            
             {params?.error && (
               <div className="p-3 bg-[#FB7185]/10 border border-[#FB7185]/30 rounded-lg text-center">
                 <p className="text-[#FB7185] text-xs font-bold">{params.error}</p>
               </div>
             )}
-
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-[#8B92A6] uppercase tracking-wider">Admin Email</label>
-              <input 
-                type="email" 
-                name="email"
-                required
-                className="w-full h-12 bg-[#161B24] border border-[#232838] rounded-xl px-4 text-white focus:outline-none focus:border-[#00C896] transition-colors"
-              />
+              <input type="email" name="email" required className="w-full h-12 bg-[#161B24] border border-[#232838] rounded-xl px-4 text-white focus:outline-none focus:border-[#00C896] transition-colors" />
             </div>
-
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-[#8B92A6] uppercase tracking-wider">Master Password</label>
-              <input 
-                type="password" 
-                name="password"
-                required
-                className="w-full h-12 bg-[#161B24] border border-[#232838] rounded-xl px-4 text-white focus:outline-none focus:border-[#00C896] transition-colors"
-              />
+              <input type="password" name="password" required className="w-full h-12 bg-[#161B24] border border-[#232838] rounded-xl px-4 text-white focus:outline-none focus:border-[#00C896] transition-colors" />
             </div>
-
-            <button 
-              type="submit" 
-              className="w-full h-12 bg-[#00C896] text-[#07090F] font-black rounded-xl hover:bg-[#5EEAD4] transition-all flex items-center justify-center mt-4"
-            >
+            <button type="submit" className="w-full h-12 bg-[#00C896] text-[#07090F] font-black rounded-xl hover:bg-[#5EEAD4] transition-all flex items-center justify-center mt-4">
               INITIALIZE OVERRIDE
             </button>
           </form>
@@ -121,30 +61,31 @@ export default async function SuperAdminDashboard({
   }
 
   // ==========================================
-  // VIEW 2: THE DASHBOARD SCREEN (AUTHORIZED)
+  // VIEW 2: DATA FETCHING FOR AUTHORIZED USER
   // ==========================================
-  
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // 🚀 Fetch Everything including the raw Auth Users to fix the "N/A" issue
   const [
     { data: allBusinesses },
     { count: totalReceipts },
     { data: receiptsData },
-    { data: recentBusinesses }
+    { data: { users } } 
   ] = await Promise.all([
-    // 🚨 Updated to fetch subscription_tier
-    supabaseAdmin.from('businesses').select('id, subscription_tier'),
+    supabaseAdmin.from('businesses').select('*').order('created_at', { ascending: false }),
     supabaseAdmin.from('receipts').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('receipts').select('grand_total'),
-    supabaseAdmin.from('businesses').select('*').order('created_at', { ascending: false }).limit(10)
+    supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
   ])
 
-  const totalVolume = receiptsData?.reduce((sum, receipt) => {
-    return sum + (Number(receipt.grand_total) || 0)
-  }, 0) || 0
+  // Create a fast map of User_ID -> Auth Email
+  const userEmailMap = new Map();
+  users?.forEach(u => userEmailMap.set(u.id, u.email));
+
+  const totalVolume = receiptsData?.reduce((sum, receipt) => sum + (Number(receipt.grand_total) || 0), 0) || 0
 
   const BASIC_PLAN_PRICE = 5000;   
   const PREMIUM_PLAN_PRICE = 15000; 
@@ -153,126 +94,24 @@ export default async function SuperAdminDashboard({
   let paidUsersCount = 0;
   const totalUsers = allBusinesses?.length || 0;
 
-  // 🚨 Updated engine to use biz.subscription_tier
-  allBusinesses?.forEach((biz) => {
+  // 🚀 Clean the vendor list and append the raw Auth Email
+  const enrichedVendors = allBusinesses?.map((biz) => {
     const subType = (biz.subscription_tier || 'free').toLowerCase(); 
-    if (subType === 'basic') {
-      calculatedMRR += BASIC_PLAN_PRICE;
-      paidUsersCount++;
-    } else if (subType === 'premium') {
-      calculatedMRR += PREMIUM_PLAN_PRICE;
-      paidUsersCount++;
+    if (subType === 'basic') { calculatedMRR += BASIC_PLAN_PRICE; paidUsersCount++; } 
+    else if (subType === 'premium') { calculatedMRR += PREMIUM_PLAN_PRICE; paidUsersCount++; }
+
+    return {
+      id: biz.id,
+      business_name: biz.business_name || biz.full_name || 'Unnamed Business',
+      // THE N/A FIX: Check business_email first, fallback to Auth Email
+      real_email: biz.business_email || userEmailMap.get(biz.user_id) || 'N/A',
+      phone: biz.business_phone || 'N/A',
+      subscription_tier: subType,
+      created_at: biz.created_at
     }
-  });
+  }) || [];
 
-  return (
-    <div className="min-h-screen bg-[#07090F] p-4 md:p-10 font-sans">
-      
-      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between border-b border-[#232838] pb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-white tracking-tight flex items-center gap-3">
-            <ShieldAlert className="w-8 h-8 text-[#00C896]" />
-            Command Center
-          </h1>
-          <p className="text-[#8B92A6] text-sm mt-1">Platform overview and global metrics.</p>
-        </div>
-        <div className="flex items-center gap-4 self-start md:self-auto">
-          <div className="bg-[#00C896]/10 text-[#00C896] px-4 py-2 rounded-xl border border-[#00C896]/20 font-bold text-xs uppercase tracking-widest">
-            God Mode Active
-          </div>
-          <form action={handleLogout}>
-            <button type="submit" className="flex items-center justify-center p-2 rounded-xl bg-[#161B24] border border-[#232838] text-[#FB7185] hover:bg-[#FB7185]/10 transition-colors">
-              <LogOut className="w-5 h-5" />
-            </button>
-          </form>
-        </div>
-      </div>
+  const metrics = { calculatedMRR, paidUsersCount, totalUsers, totalVolume, totalReceipts: totalReceipts || 0 }
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
-        <Card className="bg-[#11141B] border-[#232838]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-[#8B92A6] text-[10px] md:text-xs font-bold uppercase tracking-wider">Total Revenue (MRR)</CardTitle>
-            <Activity className="w-4 h-4 text-[#00C896]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-black text-white">₦{calculatedMRR.toLocaleString()}</div>
-            <p className="text-[#5C6478] text-xs mt-1">{paidUsersCount} Active paid subscriptions</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#11141B] border-[#232838]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-[#8B92A6] text-[10px] md:text-xs font-bold uppercase tracking-wider">Registered Vendors</CardTitle>
-            <Users className="w-4 h-4 text-[#FF6B4A]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-black text-white">{totalUsers}</div>
-            <p className="text-[#5C6478] text-xs mt-1">Total platform accounts</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#11141B] border-[#232838]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-[#8B92A6] text-[10px] md:text-xs font-bold uppercase tracking-wider">Platform Volume</CardTitle>
-            <Wallet className="w-4 h-4 text-[#4A90E2]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-black text-white">₦{totalVolume.toLocaleString()}</div>
-            <p className="text-[#5C6478] text-xs mt-1">Total value of all receipts</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-[#11141B] border-[#232838]">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-[#8B92A6] text-[10px] md:text-xs font-bold uppercase tracking-wider">Receipts Generated</CardTitle>
-            <FileText className="w-4 h-4 text-[#FBBC05]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl md:text-2xl font-black text-white">{totalReceipts || 0}</div>
-            <p className="text-[#5C6478] text-xs mt-1">Invoices processed</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <h2 className="text-xl font-bold text-white mb-6">Latest Vendor Signups</h2>
-      <div className="bg-[#11141B] border border-[#232838] rounded-2xl w-full">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-[#8B92A6] whitespace-nowrap">
-            <thead className="bg-[#161B24] border-b border-[#232838] text-xs uppercase font-bold tracking-wider">
-              <tr>
-                <th className="px-6 py-4 text-white">Business Name</th>
-                <th className="px-6 py-4 text-white">Contact</th>
-                <th className="px-6 py-4 text-white">Plan</th>
-                <th className="px-6 py-4 text-white">Date Joined</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#232838]">
-              {recentBusinesses?.map((business) => (
-                <tr key={business.id} className="hover:bg-[#161B24]/50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-white">{business.business_name || business.full_name || 'Unnamed Business'}</td>
-                  <td className="px-6 py-4">{business.business_email || business.business_phone || 'N/A'}</td>
-                  <td className="px-6 py-4">
-                    {/* 🚨 Updated table UI to pull from business.subscription_tier */}
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${
-                      (business.subscription_tier || 'free').toLowerCase() === 'premium' ? 'bg-[#FF6B4A]/10 text-[#FF6B4A] border-[#FF6B4A]/20' : 
-                      (business.subscription_tier || 'free').toLowerCase() === 'basic' ? 'bg-[#4A90E2]/10 text-[#4A90E2] border-[#4A90E2]/20' : 
-                      'bg-[#5C6478]/10 text-[#8B92A6] border-[#5C6478]/20'
-                    }`}>
-                      {business.subscription_tier || 'Free'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">{new Date(business.created_at).toLocaleDateString()}</td>
-                </tr>
-              ))}
-              {!recentBusinesses?.length && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-[#5C6478]">No vendors registered yet.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
+  return <ClientDashboard metrics={metrics} vendors={enrichedVendors} />
 }
