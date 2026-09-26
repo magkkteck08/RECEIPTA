@@ -15,6 +15,7 @@ export async function createSubscriptionCheckout(formData: FormData) {
   const plan = formData.get('plan') as string 
   const cycle = formData.get('cycle') as string 
 
+  // 🚨 TRAP 2: Ensure these IDs are from your LIVE Bachs Dashboard, not Sandbox!
   let productId = ''
   if (plan === 'premium' && cycle === 'yearly') productId = 'prod_caf5a18dd91741c599fe'
   else if (plan === 'premium' && cycle === 'monthly') productId = 'prod_2e40940594624c7298f9'
@@ -50,11 +51,18 @@ export async function createSubscriptionCheckout(formData: FormData) {
       }
     }
 
-    // 🚀 THE FIX: Pointing to the Live Production Endpoint
+    // 🚨 TRAP 1: Safely grab the key regardless of what you named it in Vercel
+    const apiKey = process.env.BACHS_KEY || process.env.BACHS_SECRET_KEY || process.env.BACHS_API_KEY
+
+    if (!apiKey) {
+      console.error("CRITICAL ERROR: No Bachs API Key found in Vercel Environment Variables.")
+      throw new Error("Missing API Key")
+    }
+
     const response = await fetch('https://api.bachs.io/v1/checkout-sessions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.BACHS_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
@@ -63,7 +71,10 @@ export async function createSubscriptionCheckout(formData: FormData) {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error("Bachs API Rejected Request:", data)
+      // THIS WILL PRINT THE EXACT ERROR IN VERCEL LOGS
+      console.error("🚨 BACHS LIVE API REJECTED REQUEST 🚨")
+      console.error("Status:", response.status)
+      console.error("Bachs Error Details:", JSON.stringify(data, null, 2))
       throw new Error(data.message || "Failed to initialize payment gateway")
     }
 
