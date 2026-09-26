@@ -15,7 +15,6 @@ export async function createSubscriptionCheckout(formData: FormData) {
   const plan = formData.get('plan') as string 
   const cycle = formData.get('cycle') as string 
 
-  // IMPORTANT: Replace these with your actual Product IDs from the Bachs dashboard
   let productId = ''
   if (plan === 'premium' && cycle === 'yearly') productId = 'prod_caf5a18dd91741c599fe'
   else if (plan === 'premium' && cycle === 'monthly') productId = 'prod_2e40940594624c7298f9'
@@ -26,17 +25,15 @@ export async function createSubscriptionCheckout(formData: FormData) {
     redirect('/dashboard/upgrade?message=Invalid plan selected')
   }
 
-  // 🚀 THE FIX: Dynamically grab domain, but FORCE Ngrok if on localhost
   const headersList = await headers()
   const host = headersList.get('host') || 'localhost:3000'
   
   const origin = host.includes('localhost')
-    ? 'https://voncile-accommodable-radically.ngrok-free.dev' // Your active Ngrok URL
-    : `https://${host}` // Your live production URL (e.g., receipta.cv)
+    ? 'https://voncile-accommodable-radically.ngrok-free.dev'
+    : `https://${host}` 
 
   let sessionUrl = ''
 
-  
   try {
     const payload = {
       product_cart: [
@@ -49,12 +46,12 @@ export async function createSubscriptionCheckout(formData: FormData) {
       cancel_url: `${origin}/dashboard/upgrade?payment=cancelled`,
       metadata: {
         user_id: user.id,             
-        plan_type: `${plan}_${cycle}` // We will parse this in the webhook!
+        plan_type: `${plan}_${cycle}` 
       }
     }
 
-    // Ping the Bachs SANDBOX endpoint
-    const response = await fetch('https://sandbox-api.bachs.io/v1/checkout-sessions', {
+    // 🚀 THE FIX: Pointing to the Live Production Endpoint
+    const response = await fetch('https://api.bachs.io/v1/checkout-sessions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.BACHS_KEY}`,
@@ -70,7 +67,6 @@ export async function createSubscriptionCheckout(formData: FormData) {
       throw new Error(data.message || "Failed to initialize payment gateway")
     }
 
-    // Extract the URL exactly as specified by the Bachs docs
     sessionUrl = data.checkout_url
 
     if (!sessionUrl) {
