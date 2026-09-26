@@ -43,11 +43,17 @@ export default function ClientDashboard({ metrics, vendors }: { metrics: any, ve
     e.preventDefault()
     setLoading(true)
     
-    // Filter emails based on the selected segment, excluding 'N/A'
+    // 🚀 FIXED: Aggressive filtering to catch all edge cases and ensure delivery
     const targetEmails = vendors
-      .filter(v => segment === 'all' || v.subscription_tier.toLowerCase() === segment)
-      .map(v => v.real_email)
-      .filter(email => email !== 'N/A' && email !== '')
+      .filter(v => {
+        if (segment === 'all') return true;
+        // Normalize the database tier just in case it has spaces or uppercase letters
+        const tier = (v.subscription_tier || 'free').trim().toLowerCase();
+        return tier === segment;
+      })
+      .map(v => v.real_email?.trim())
+      // Validate that it is an actual email address to prevent Resend from choking
+      .filter(email => email && email !== 'N/A' && email.includes('@'))
 
     if (targetEmails.length === 0) {
       toast.error('No valid emails found for this segment.')
@@ -57,7 +63,7 @@ export default function ClientDashboard({ metrics, vendors }: { metrics: any, ve
     const res = await sendBroadcastEmail(targetEmails, subject, message)
     if (res.error) toast.error(res.error)
     else {
-      toast.success(`Broadcast sent to ${targetEmails.length} vendors!`)
+      toast.success(`Broadcast successfully queued to ${targetEmails.length} vendors!`)
       setBroadcastModal(false)
       setSubject(''); setMessage(''); setSegment('all')
     }

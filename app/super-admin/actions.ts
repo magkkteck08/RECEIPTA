@@ -37,6 +37,7 @@ export async function sendVendorEmail(to: string, subject: string, message: stri
       from: FROM_EMAIL,
       to,
       subject,
+      text: message, // Anti-spam fallback
       html: buildEmailTemplate(subject, message)
     })
     return { success: true }
@@ -45,26 +46,33 @@ export async function sendVendorEmail(to: string, subject: string, message: stri
   }
 }
 
-// 🚀 SEND BULK BROADCAST EMAIL
+// 🚀 SEND BULK BROADCAST EMAIL (Fixed with Batch API to prevent skipping)
 export async function sendBroadcastEmail(emails: string[], subject: string, message: string) {
   try {
-    // Resend allows sending multiple emails by mapping through them
-    const emailPromises = emails.map(email => 
-      resend.emails.send({
+    // Resend Batch API allows up to 100 emails per request safely
+    const BATCH_SIZE = 100;
+    
+    for (let i = 0; i < emails.length; i += BATCH_SIZE) {
+      const batch = emails.slice(i, i + BATCH_SIZE);
+      
+      const payload = batch.map(email => ({
         from: FROM_EMAIL,
         to: email,
         subject,
+        text: message, // Anti-spam fallback
         html: buildEmailTemplate(subject, message)
-      })
-    )
-    await Promise.all(emailPromises)
+      }))
+
+      await resend.batch.send(payload)
+    }
+    
     return { success: true }
   } catch (e: any) {
     return { error: e.message }
   }
 }
 
-// Beautiful HTML Wrapper for your Admin emails
+// Beautiful HTML Wrapper with Anti-Spam Footer
 function buildEmailTemplate(subject: string, message: string) {
   return `
     <div style="background-color: #0F1117; color: #EEEEF5; padding: 40px; font-family: sans-serif; border-radius: 12px; border: 1px solid #252733; max-width: 600px; margin: 0 auto;">
@@ -74,6 +82,12 @@ function buildEmailTemplate(subject: string, message: string) {
       <div style="border-top: 1px solid #252733; padding-top: 20px; margin-top: 20px;">
         <p style="color: #737490; font-size: 14px; margin: 0;"><strong>IdanMagkk</strong></p>
         <p style="color: #737490; font-size: 12px; margin: 0;">Founder, Receipta</p>
+        
+        <p style="color: #5C6478; font-size: 10px; margin-top: 30px; line-height: 1.5;">
+          You are receiving this email because you registered as a vendor on Receipta. 
+          If you no longer wish to receive these updates, please reply to this email with "Unsubscribe".<br/>
+          Receipta HQ, Lagos, Nigeria.
+        </p>
       </div>
     </div>
   `
