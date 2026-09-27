@@ -74,9 +74,14 @@ export default function UpgradePage() {
               <form action={createSubscriptionCheckout} className="w-full mt-auto">
                 <input type="hidden" name="plan" value="basic" />
                 <input type="hidden" name="cycle" value={billingCycle} />
-                <Button type="submit" variant="outline" className="w-full h-12 bg-[#15171F] border border-[#252733] text-white hover:bg-[#252733] font-bold rounded-xl transition-all">
-                  START BASIC
-                </Button>
+                {/* 🚧 TEMPORARY PROD BLOCK */}
+<button 
+  type="button" 
+  disabled 
+  className="w-full py-3 mt-4 bg-[#161B24] text-[#5C6478] font-bold rounded-xl cursor-not-allowed border border-[#232838] flex items-center justify-center"
+>
+  UPGRADES PAUSED FOR MAINTENANCE
+</button>
               </form>
             </CardContent>
           </Card>
