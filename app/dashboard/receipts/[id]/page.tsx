@@ -222,8 +222,7 @@ export default function ReceiptPreview() {
     }
   }
 
-  const verifyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://receipta.app'}/verify/${receipt.verification_code}`
-
+  const verifyUrl = `https://receipta.cv/verify/${receipt.verification_code}`
   return (
     <div className="min-h-full pb-20 font-sans print:bg-white print:pb-0 bg-[#0A0C10]">
       
@@ -516,18 +515,24 @@ export default function ReceiptPreview() {
             </div>
 
             {/* QR VERIFICATION MATRIX */}
-            <div className="flex flex-col items-center justify-center w-full mb-4 mt-1">
-               <div className="bg-white p-2 rounded-xl mb-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] print-border">
-                 <QRCodeSVG value={verifyUrl} size={80} level="H" />
-               </div>
-               <div className="text-center">
-                 <p className="text-[9px] text-[#8B949E] font-black uppercase tracking-widest mb-1 print-text-gray">Scan to verify authenticity</p>
-                 <div className="inline-flex items-center gap-1.5 bg-[#0A0C10] px-3 py-1.5 rounded-full border border-white/10 shadow-sm print-bg-transparent print-border">
-                   <ShieldCheck className="w-3 h-3" style={{ color: brandColor }} />
-                   <span className="text-[9px] font-mono font-bold text-white uppercase tracking-widest print-text-gray">ID: {receipt.verification_code}</span>
-                 </div>
-               </div>
-            </div>
+<div className="flex flex-col items-center justify-center w-full mb-4 mt-1">
+   <div className="bg-white p-2 rounded-xl mb-3 shadow-[0_0_20px_rgba(255,255,255,0.1)] print-border">
+     <QRCodeSVG 
+       value={verifyUrl} 
+       size={100}      
+       level="M"       
+       bgColor="#ffffff"
+       fgColor="#000000"
+     />
+   </div>
+   <div className="text-center">
+     <p className="text-[9px] text-[#8B949E] font-black uppercase tracking-widest mb-1 print-text-gray">Scan to verify authenticity</p>
+     <div className="inline-flex items-center gap-1.5 bg-[#0A0C10] px-3 py-1.5 rounded-full border border-white/10 shadow-sm print-bg-transparent print-border">
+       <ShieldCheck className="w-3 h-3" style={{ color: brandColor }} />
+       <span className="text-[9px] font-mono font-bold text-white uppercase tracking-widest print-text-gray">ID: {receipt.verification_code}</span>
+     </div>
+   </div>
+   </div>
 
             {/* BUSINESS SOCIAL LINKS */}
             <div className="flex justify-center items-center gap-5 border-t border-white/5 pt-4 pb-2 print-border">

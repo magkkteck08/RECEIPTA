@@ -110,10 +110,14 @@ export default function UpgradePage() {
               <form action={createSubscriptionCheckout} className="w-full mt-auto">
                 <input type="hidden" name="plan" value="premium" />
                 <input type="hidden" name="cycle" value={billingCycle} />
-                <Button type="submit" className="w-full h-12 bg-gradient-to-r from-[#00C896] to-[#00A67C] hover:shadow-[0_0_20px_rgba(0,200,150,0.4)] text-white font-bold rounded-xl transition-all border-0 flex items-center justify-center">
-                  <Zap className="w-5 h-5 mr-2" />
-                  UPGRADE TO PREMIUM
-                </Button>
+                {/* 🚧 TEMPORARY PROD BLOCK */}
+<button 
+  type="button" 
+  disabled 
+  className="w-full py-3 mt-4 bg-[#161B24] text-[#5C6478] font-bold rounded-xl cursor-not-allowed border border-[#232838] flex items-center justify-center"
+>
+  UPGRADES PAUSED FOR MAINTENANCE
+</button>
               </form>
             </CardContent>
           </Card>
