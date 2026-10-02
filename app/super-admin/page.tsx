@@ -68,22 +68,33 @@ export default async function SuperAdminDashboard({ searchParams }: { searchPara
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // 🚀 Fetch Everything including the raw Auth Users to fix the "N/A" issue
+  // 🚀 Fetch Everything including the raw Auth Users and Receipt counts
   const [
     { data: allBusinesses },
     { count: totalReceipts },
     { data: receiptsData },
-    { data: { users } } 
+    { data: { users } },
+    { data: allReceiptsForCounting } 
   ] = await Promise.all([
     supabaseAdmin.from('businesses').select('*').order('created_at', { ascending: false }),
     supabaseAdmin.from('receipts').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('receipts').select('grand_total'),
-    supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+    supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
+    supabaseAdmin.from('receipts').select('business_id') // Fetch all business_ids to count them
   ])
 
   // Create a fast map of User_ID -> Auth Email
   const userEmailMap = new Map();
   users?.forEach(u => userEmailMap.set(u.id, u.email));
+
+  // 🚀 NEW: Create a map of Business_ID -> Receipt Count
+  const receiptCountMap = new Map();
+  allReceiptsForCounting?.forEach(receipt => {
+    const bizId = receipt.business_id;
+    if (bizId) {
+      receiptCountMap.set(bizId, (receiptCountMap.get(bizId) || 0) + 1);
+    }
+  });
 
   const totalVolume = receiptsData?.reduce((sum, receipt) => sum + (Number(receipt.grand_total) || 0), 0) || 0
 
@@ -94,7 +105,7 @@ export default async function SuperAdminDashboard({ searchParams }: { searchPara
   let paidUsersCount = 0;
   const totalUsers = allBusinesses?.length || 0;
 
-  // 🚀 Clean the vendor list and append the raw Auth Email
+  // 🚀 Clean the vendor list, append the raw Auth Email, and add Receipt Count
   const enrichedVendors = allBusinesses?.map((biz) => {
     const subType = (biz.subscription_tier || 'free').toLowerCase(); 
     if (subType === 'basic') { calculatedMRR += BASIC_PLAN_PRICE; paidUsersCount++; } 
@@ -103,11 +114,11 @@ export default async function SuperAdminDashboard({ searchParams }: { searchPara
     return {
       id: biz.id,
       business_name: biz.business_name || biz.full_name || 'Unnamed Business',
-      // THE N/A FIX: Check business_email first, fallback to Auth Email
       real_email: biz.business_email || userEmailMap.get(biz.user_id) || 'N/A',
       phone: biz.business_phone || 'N/A',
       subscription_tier: subType,
-      created_at: biz.created_at
+      created_at: biz.created_at,
+      receipt_count: receiptCountMap.get(biz.id) || 0 // Pass the count to the client!
     }
   }) || [];
 
