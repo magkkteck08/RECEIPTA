@@ -92,11 +92,14 @@ export default function CreateReceiptPage() {
       }
 
       // 🛑 1. ENFORCEMENT WALL: Check Plan Limits BEFORE generating
-      const userTier = business?.plan_tier || 'free'
+      const rawTier = business?.plan_tier || business?.subscription_tier || 'free'
+      let userTier = rawTier.toLowerCase()
+      if (userTier === 'premuim') userTier = 'premium' // Catch the typo!
+
       const limits = getPlanLimits(userTier)
 
       if (limits.receiptsLimit !== -1) {
-        if (userTier === 'free') {
+        if (userTier === 'free' || userTier === 'starter') {
           const { count } = await supabase
             .from('receipts')
             .select('*', { count: 'exact', head: true })
@@ -115,7 +118,7 @@ export default function CreateReceiptPage() {
           }
         }
       }
-
+      
       const receiptNumber = `${business.receipt_prefix}-${business.receipt_start_number + Math.floor(Math.random() * 1000)}`
       const verificationCode = `VRF-${Math.random().toString(36).substring(2, 10).toUpperCase()}`
       const isPaid = documentType === 'Receipt' ? grandTotal : 0

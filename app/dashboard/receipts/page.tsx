@@ -99,12 +99,16 @@ export default function CreateReceiptPage() {
         throw new Error("Please provide an Item Name for all products.")
       }
 
-      // 🛑 1. ENFORCEMENT WALL: Check Plan Limits BEFORE generating
-      const userTier = business?.plan_tier || 'free'
+     // 🛑 1. ENFORCEMENT WALL: Check Plan Limits BEFORE generating
+      // FIX: Check both column names, force lowercase, and catch typos
+      const rawTier = business?.plan_tier || business?.subscription_tier || 'free'
+      let userTier = rawTier.toLowerCase()
+      if (userTier === 'premuim') userTier = 'premium' // Catch the typo!
+
       const limits = getPlanLimits(userTier)
 
       if (limits.receiptsLimit !== -1) {
-        if (userTier === 'free') {
+        if (userTier === 'free' || userTier === 'starter') {
           // Check Lifetime Limit for Free Users
           const { count } = await supabase
             .from('receipts')
